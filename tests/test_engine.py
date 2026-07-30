@@ -236,3 +236,39 @@ def test_expired_bank_claim_is_still_reported():
     )
     claim = _find(evaluate(event, RULES, now=NOW), "RBI_UNAUTH_TXN")
     assert claim.status is ClaimStatus.EXPIRED
+
+
+# --- model output robustness --------------------------------------------------
+
+def test_json_survives_a_conversational_preamble():
+    """Gemma prefixes answers with filler. Observed on-device: the model
+    replied 'ಖಂಡಿತ, ...' before its actual answer. That must not break parsing."""
+    from api.services.extract import _extract_json
+    import json as _json
+
+    raw = 'ಖಂಡಿತ, ನೀವು ಹೇಳಿದ್ದು: {"event_type": "hailstorm", "area_acres": 1.5}'
+    assert _json.loads(_extract_json(raw))["event_type"] == "hailstorm"
+
+
+def test_json_survives_code_fences():
+    from api.services.extract import _extract_json
+    import json as _json
+
+    raw = '```json\n{"event_type": "hailstorm"}\n```'
+    assert _json.loads(_extract_json(raw))["event_type"] == "hailstorm"
+
+
+def test_json_survives_trailing_commentary():
+    from api.services.extract import _extract_json
+    import json as _json
+
+    raw = '{"event_type": "hailstorm"}\n\nLet me know if you need anything else!'
+    assert _json.loads(_extract_json(raw))["event_type"] == "hailstorm"
+
+
+def test_braces_inside_strings_do_not_confuse_the_parser():
+    from api.services.extract import _extract_json
+    import json as _json
+
+    raw = 'Sure: {"crop": "cotton {kapas}", "area_acres": 1.5}'
+    assert _json.loads(_extract_json(raw))["crop"] == "cotton {kapas}"

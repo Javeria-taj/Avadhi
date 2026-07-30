@@ -76,10 +76,51 @@ def _window_delta(rule: dict[str, Any]) -> timedelta | None:
     return None
 
 
+def _clock_start(rule: dict[str, Any], event: EventReport) -> tuple[str, Any]:
+    """Which field the clock runs from, and its value.
+
+    PMFBY runs from the event. RBI runs from the bank's communication - a
+    different field, and getting this wrong would silently shift the deadline.
+    """
+    field = rule.get("window_starts_at", "event_datetime")
+    return field, event.get(field)
+
+
+def _compute_deadline(
+    rule: dict[str, Any], start: datetime
+) -> datetime | None:
+    """Deadline from a start datetime, calendar or working-day."""
+    working = rule.get("window_working_days")
+    if working is not None:
+        # Imported lazily: workdays imports IST from this module.
+        from api.rules.workdays import working_day_deadline
+
+        return working_day_deadline(start, working)
+
+    delta = _window_delta(rule)
+    if delta is None:
+        return None
+    return _as_ist(start) + delta
+
+
+SUPPORTED_LANGS = ("kn", "en")
+
+
+def _localised(rule: dict[str, Any], key: str, lang: str, default: Any) -> Any:
+    """Pick a rule field for the active language, falling back to Kannada.
+
+    Falling back rather than returning empty matters: a missing English string
+    should degrade to a language the content definitely exists in, not to a
+    blank checklist.
+    """
+    return rule.get(f"{key}_{lang}") or rule.get(f"{key}_kn") or default
+
+
 def evaluate(
     event: EventReport,
     rules: list[dict[str, Any]],
     now: datetime | None = None,
+    lang: str = "kn",
 ) -> list[ClaimWindow]:
     """Return every claim window triggered by this event.
 
@@ -88,6 +129,7 @@ def evaluate(
     different clocks.
     """
     current = _as_ist(now) if now else now_ist()
+    lang = lang if lang in SUPPORTED_LANGS else "kn"
     results: list[ClaimWindow] = []
 
     for rule in rules:
@@ -117,9 +159,14 @@ def evaluate(
             "scheme_name_en": rule["scheme_name_en"],
             "scheme_name_kn": rule["scheme_name_kn"],
             "matched_rules": passed_labels,
-            "evidence_checklist_kn": rule.get("evidence_checklist_kn", []),
             "channels": rule.get("channels", []),
+            "evidence_checklist_kn": rule.get("evidence_checklist_kn", []),
             "failure_consequence_kn": rule.get("failure_consequence_kn"),
+            "lang": lang,
+            "scheme_name": rule[f"scheme_name_{lang}"] if f"scheme_name_{lang}" in rule
+                           else rule["scheme_name_en"],
+            "evidence_checklist": _localised(rule, "evidence_checklist", lang, []),
+            "failure_consequence": _localised(rule, "failure_consequence", lang, None),
             "source_url": rule.get("source_url"),
             "verified_on": rule.get("verified_on"),
             "form_id": rule.get("form_id"),
@@ -131,34 +178,28 @@ def evaluate(
             )
             continue
 
-        start_field = rule.get("window_starts_at") or "event_datetime"
-        start_time = event.get(start_field)
-
-        if start_time is None:
+        clock_field, clock_start = _clock_start(rule, event)
+        if clock_start is None:
             results.append(
                 ClaimWindow(
                     status=ClaimStatus.NEED_INFO,
-                    missing_info=[start_field],
+                    missing_info=[clock_field],
                     **base,
                 )
             )
             continue
 
-        if rule.get("window_working_days") is not None:
-            from api.rules.workdays import working_day_deadline
-            deadline = working_day_deadline(start_time, rule["window_working_days"])
-        else:
-            delta = _window_delta(rule)
-            if delta is None:
-                results.append(
-                    ClaimWindow(
-                        status=ClaimStatus.NEED_INFO,
-                        missing_info=[start_field],
-                        **base,
-                    )
+        deadline = _compute_deadline(rule, clock_start)
+        if deadline is None:
+            results.append(
+                ClaimWindow(
+                    status=ClaimStatus.NEED_INFO,
+                    missing_info=[clock_field],
+                    **base,
                 )
-                continue
-            deadline = _as_ist(start_time) + delta
+            )
+            continue
+
         hours_remaining = (deadline - current).total_seconds() / 3600.0
 
         if hours_remaining <= 0:

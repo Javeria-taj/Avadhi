@@ -3,8 +3,16 @@
   "scheme_name_en": "RBI zero liability - unauthorised electronic transaction",
   "scheme_name_kn": "ಆರ್‌ಬಿಐ ಶೂನ್ಯ ಹೊಣೆಗಾರಿಕೆ - ಅನಧಿಕೃತ ವಹಿವಾಟು",
   "trigger_predicates": [
-    { "field": "event_type", "op": "==", "value": "unauthorised_transaction" },
-    { "field": "has_bank_account", "op": "==", "value": true }
+    {
+      "field": "event_type",
+      "op": "==",
+      "value": "unauthorised_transaction"
+    },
+    {
+      "field": "has_bank_account",
+      "op": "==",
+      "value": true
+    }
   ],
   "window_hours": null,
   "window_days": null,
@@ -36,5 +44,14 @@
   "form_id": "rbi_dispute_v1",
   "source_url": "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NOTI15D620D2C4D2CA4A33AABC928CA6204B19.PDF",
   "verified_on": "2026-07-30",
-  "verification_note": "RBI circular RBI/2017-18/15 dated 6 July 2017, 'Customer Protection - Limiting Liability of Customers in Unauthorised Electronic Banking Transactions'. Zero liability for third-party breach requires notification within 3 working days of receiving the bank's communication; working days are counted per the home branch schedule EXCLUDING the date of receipt. Liability caps beyond that window (Rs 5,000 basic savings / Rs 10,000 other savings and PPI / Rs 25,000 high-limit credit cards) are NOT encoded as predicates - they are consequences, not eligibility. Banks must shadow-credit within 10 working days of notification."
+  "verification_note": "RBI circular RBI/2017-18/15 dated 6 July 2017, 'Customer Protection - Limiting Liability of Customers in Unauthorised Electronic Banking Transactions'. Zero liability for third-party breach requires notification within 3 working days of receiving the bank's communication; working days are counted per the home branch schedule EXCLUDING the date of receipt. Liability caps beyond that window (Rs 5,000 basic savings / Rs 10,000 other savings and PPI / Rs 25,000 high-limit credit cards) are NOT encoded as predicates - they are consequences, not eligibility. Banks must shadow-credit within 10 working days of notification.",
+  "evidence_checklist_en": [
+    "Screenshot the bank's SMS or email alert — do not delete it",
+    "Call the bank helpline now and get the card or account blocked",
+    "Write down the complaint reference number",
+    "Give a written complaint at the branch and get a stamped copy",
+    "Report at cybercrime.gov.in or call 1930",
+    "Get an account statement covering the transaction"
+  ],
+  "failure_consequence_en": "Report within 3 working days and your liability is zero. Report later and you bear part of the loss yourself."
 }

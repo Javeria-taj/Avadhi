@@ -3,8 +3,19 @@
   "scheme_name_en": "Pradhan Mantri Jeevan Jyoti Bima Yojana - death claim",
   "scheme_name_kn": "ಪ್ರಧಾನ ಮಂತ್ರಿ ಜೀವನ್ ಜ್ಯೋತಿ ಬಿಮಾ ಯೋಜನೆ",
   "trigger_predicates": [
-    { "field": "event_type", "op": "in", "value": ["death", "accidental_death"] },
-    { "field": "has_pmjjby", "op": "==", "value": true }
+    {
+      "field": "event_type",
+      "op": "in",
+      "value": [
+        "death",
+        "accidental_death"
+      ]
+    },
+    {
+      "field": "has_pmjjby",
+      "op": "==",
+      "value": true
+    }
   ],
   "window_hours": null,
   "window_days": 30,
@@ -30,5 +41,13 @@
   "form_id": "pmjjby_claim_v1",
   "source_url": "https://jansuraksha.gov.in/",
   "verified_on": "2026-07-29",
-  "verification_note": "30-day filing window widely stated. UNRESOLVED CONFLICT: the waiting period after joining is stated as 30 days in LIC's claim procedure document and 45 days in SBI's version of the same document. Waiting-period logic is deliberately NOT encoded as a predicate here - do not assert a number you cannot source."
+  "verification_note": "30-day filing window widely stated. UNRESOLVED CONFLICT: the waiting period after joining is stated as 30 days in LIC's claim procedure document and 45 days in SBI's version of the same document. Waiting-period logic is deliberately NOT encoded as a predicate here - do not assert a number you cannot source.",
+  "evidence_checklist_en": [
+    "Inform the bank branch where the premium was debited, first",
+    "Death certificate issued by the registrar",
+    "Claim-cum-discharge form",
+    "Nominee's KYC documents",
+    "Copy of the first two pages of the passbook"
+  ],
+  "failure_consequence_en": "The nominee must file the claim within 30 days."
 }

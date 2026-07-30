@@ -15,7 +15,11 @@
         "post_harvest_loss"
       ]
     },
-    { "field": "has_pmfby_policy", "op": "==", "value": true }
+    {
+      "field": "has_pmfby_policy",
+      "op": "==",
+      "value": true
+    }
   ],
   "window_hours": 72,
   "window_days": null,
@@ -53,5 +57,14 @@
   "form_id": "pmfby_intimation_v1",
   "source_url": "https://pmfby.gov.in/",
   "verified_on": "2026-07-29",
-  "verification_note": "72-hour intimation window for localised calamities and post-harvest losses confirmed across multiple independent sources, which also identify missing this window as the most common cause of claim rejection. Helpline number differs between sources (14447 / 1800-200-7710 / 1800-180-1551) - VERIFY on pmfby.gov.in before quoting."
+  "verification_note": "72-hour intimation window for localised calamities and post-harvest losses confirmed across multiple independent sources, which also identify missing this window as the most common cause of claim rejection. Helpline number differs between sources (14447 / 1800-200-7710 / 1800-180-1551) - VERIFY on pmfby.gov.in before quoting.",
+  "evidence_checklist_en": [
+    "Photograph the whole field — the extent of the damage must be visible",
+    "Take close-up photos of the damaged crop, from several spots",
+    "Keep a boundary stone or landmark in frame so the location is identifiable",
+    "Photograph the survey number stone if there is one",
+    "Write down the exact date and time the damage happened",
+    "Keep your policy certificate and bank passbook to hand"
+  ],
+  "failure_consequence_en": "If you do not report within 72 hours, the claim can be rejected even though the crop was genuinely damaged."
 }

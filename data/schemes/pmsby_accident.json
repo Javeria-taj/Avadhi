@@ -3,8 +3,19 @@
   "scheme_name_en": "Pradhan Mantri Suraksha Bima Yojana - accident claim",
   "scheme_name_kn": "ಪ್ರಧಾನ ಮಂತ್ರಿ ಸುರಕ್ಷಾ ಬಿಮಾ ಯೋಜನೆ",
   "trigger_predicates": [
-    { "field": "event_type", "op": "in", "value": ["accidental_death", "disability"] },
-    { "field": "has_pmsby", "op": "==", "value": true }
+    {
+      "field": "event_type",
+      "op": "in",
+      "value": [
+        "accidental_death",
+        "disability"
+      ]
+    },
+    {
+      "field": "has_pmsby",
+      "op": "==",
+      "value": true
+    }
   ],
   "window_hours": null,
   "window_days": 30,
@@ -32,5 +43,13 @@
   "form_id": "pmsby_claim_v1",
   "source_url": "https://jansuraksha.gov.in/",
   "verified_on": "2026-07-29",
-  "verification_note": "30-day submission window widely stated across insurer and aggregator sources. Confirm against the current official Jan Suraksha claim procedure document before relying on it."
+  "verification_note": "30-day submission window widely stated across insurer and aggregator sources. Confirm against the current official Jan Suraksha claim procedure document before relying on it.",
+  "evidence_checklist_en": [
+    "Collect the claim-cum-discharge form from the bank",
+    "Death certificate, or disability certificate",
+    "FIR copy — mandatory for accident cases",
+    "Nominee's Aadhaar and bank details",
+    "Copy of the first two pages of the passbook"
+  ],
+  "failure_consequence_en": "If not submitted to the bank within 30 days the claim may be delayed or rejected."
 }

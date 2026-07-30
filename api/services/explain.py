@@ -12,16 +12,27 @@ from api.models.schemas import ClaimStatus, ClaimWindow
 
 log = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You explain an insurance claim deadline to a farmer in simple \
-spoken Kannada. Two or three short sentences. No English words except scheme names.
+LANG_NAMES = {"kn": "simple spoken Kannada", "en": "plain simple English"}
 
-You are given facts. Do not add facts, do not change any number, and do not \
-soften a deadline. State how much time is left, and what to do first.
-"""
+
+def _system_prompt(lang: str) -> str:
+    return (
+        f"You explain an insurance or banking claim deadline to an ordinary person in "
+        f"{LANG_NAMES.get(lang, LANG_NAMES['kn'])}. Two or three short sentences.\n\n"
+        "You are given facts. Do not add facts, do not change any number, and do not "
+        "soften a deadline. State how much time is left, and what to do first."
+    )
 
 # Pre-written strings. The demo must never depend on live generation for its
 # most important line - if the model stalls, the countdown still speaks.
-TEMPLATES = {
+TEMPLATES_EN = {
+    ClaimStatus.OPEN: "You have {hours} hours left. Take photos now and inform the insurer.",
+    ClaimStatus.CLOSING_SOON: "Warning: only {hours} hours left. Report immediately.",
+    ClaimStatus.EXPIRED: "This claim window has closed. You can still contact the officer and file a grievance.",
+    ClaimStatus.NEED_INFO: "More information is needed. Please answer the question below.",
+}
+
+TEMPLATES_KN = {
     ClaimStatus.OPEN: "ನಿಮಗೆ ಇನ್ನೂ {hours} ಗಂಟೆ ಸಮಯವಿದೆ. ಈಗಲೇ ಫೋಟೋ ತೆಗೆದು ವಿಮಾ ಕಂಪನಿಗೆ ತಿಳಿಸಿ.",
     ClaimStatus.CLOSING_SOON: "ಎಚ್ಚರಿಕೆ: ಕೇವಲ {hours} ಗಂಟೆ ಬಾಕಿ ಇದೆ. ತಕ್ಷಣ ತಿಳಿಸಿ.",
     ClaimStatus.EXPIRED: "ಈ ಕ್ಲೇಮ್‌ನ ಸಮಯ ಮುಗಿದಿದೆ. ಆದರೂ ಕೃಷಿ ಅಧಿಕಾರಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ ದೂರು ಸಲ್ಲಿಸಬಹುದು.",
@@ -29,43 +40,38 @@ TEMPLATES = {
 }
 
 
-def _template(claim: ClaimWindow) -> str:
+def _template(claim: ClaimWindow, lang: str) -> str:
     hours = int(claim.hours_remaining) if claim.hours_remaining else 0
-    return TEMPLATES[claim.status].format(hours=abs(hours))
+    table = TEMPLATES_EN if lang == "en" else TEMPLATES_KN
+    return table[claim.status].format(hours=abs(hours))
 
 
-def explain(claim: ClaimWindow) -> str:
+def explain(claim: ClaimWindow, lang: str = "kn") -> str:
     """Generate an explanation, falling back to a template on any failure."""
     if settings.mock_mode:
-        return _template(claim)
+        return _template(claim, lang)
 
     try:
-        from mlx_lm import generate
+        from api.services.llm import generate as llm_generate
 
-        from api.services.extract import _load
-
-        model, tokenizer = _load()
         facts = (
             f"Scheme: {claim.scheme_name_en}. "
             f"Status: {claim.status.value}. "
             f"Hours remaining: {claim.hours_remaining}. "
             f"Consequence of missing it: {claim.failure_consequence_kn}"
         )
-        prompt = tokenizer.apply_chat_template(
-            [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": facts},
-            ],
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        return generate(model, tokenizer, prompt=prompt, max_tokens=160).strip()
+        return llm_generate(_system_prompt(lang), facts, max_tokens=160).strip()
     except Exception:
         log.exception("Explanation generation failed, using template")
-        return _template(claim)
+        return _template(claim, lang)
 
 
-def attach_explanations(claims: list[ClaimWindow]) -> list[ClaimWindow]:
+def attach_explanations(
+    claims: list[ClaimWindow], lang: str = "kn"
+) -> list[ClaimWindow]:
     for claim in claims:
-        claim.explanation_kn = explain(claim)
+        text = explain(claim, lang)
+        claim.explanation = text
+        # The _kn field always holds Kannada, whatever was requested.
+        claim.explanation_kn = text if lang == "kn" else _template(claim, "kn")
     return claims

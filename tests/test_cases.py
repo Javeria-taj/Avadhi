@@ -164,9 +164,9 @@ def test_a_reported_case_does_not_revert_to_expired():
 
 def test_recompute_refreshes_hours_remaining():
     case = make_hail_case()
-    raw = json.loads((settings.data_dir / "cases.json").read_text(encoding="utf-8"))
+    raw = json.loads((settings.data_dir / "cases.json").read_text())
     raw[case.case_id]["claim"]["hours_remaining"] = 999.0
-    (settings.data_dir / "cases.json").write_text(json.dumps(raw, default=str), encoding="utf-8")
+    (settings.data_dir / "cases.json").write_text(json.dumps(raw, default=str))
 
     assert store.recompute(store.get_case(case.case_id)).claim.hours_remaining < 100
 
@@ -240,3 +240,56 @@ def test_intake_creates_a_case_and_returns_its_id():
     case_id = response.json()["case_id"]
     assert case_id
     assert store.get_case(case_id) is not None
+
+
+# --- language support ---------------------------------------------------------
+
+def test_intake_defaults_to_kannada():
+    body = client.post(
+        "/api/intake",
+        files={"audio": ("c.webm", io.BytesIO(b"x"), "audio/webm")},
+    ).json()
+    assert body["lang"] == "kn"
+    assert body["claims"][0]["evidence_checklist"]
+
+
+def test_intake_in_english_returns_english_content():
+    """A judge who does not speak Kannada must be able to use the app."""
+    body = client.post(
+        "/api/intake",
+        files={"audio": ("c.webm", io.BytesIO(b"x"), "audio/webm")},
+        data={"lang": "en"},
+    ).json()
+    assert body["lang"] == "en"
+    claim = body["claims"][0]
+    assert claim["lang"] == "en"
+    # English checklist, and it is genuinely different from the Kannada one.
+    assert claim["evidence_checklist"] != claim["evidence_checklist_kn"]
+    assert any("Photograph" in step for step in claim["evidence_checklist"])
+
+
+def test_kannada_fields_stay_kannada_even_in_english_mode():
+    """The _kn fields are a stable contract - they never hold English."""
+    body = client.post(
+        "/api/intake",
+        files={"audio": ("c.webm", io.BytesIO(b"x"), "audio/webm")},
+        data={"lang": "en"},
+    ).json()
+    assert body["claims"][0]["evidence_checklist_kn"]
+    assert "Photograph" not in " ".join(body["claims"][0]["evidence_checklist_kn"])
+
+
+def test_unsupported_language_falls_back_to_kannada():
+    body = client.post(
+        "/api/intake",
+        files={"audio": ("c.webm", io.BytesIO(b"x"), "audio/webm")},
+        data={"lang": "fr"},
+    ).json()
+    assert body["lang"] == "kn"
+
+
+def test_every_rule_has_english_content():
+    """Missing English would give a judge a blank checklist."""
+    for rule in RULES:
+        assert rule.get("evidence_checklist_en"), f"{rule['rule_id']} has no English checklist"
+        assert rule.get("failure_consequence_en"), f"{rule['rule_id']} has no English consequence"

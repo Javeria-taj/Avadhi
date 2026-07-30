@@ -16,13 +16,16 @@ import re
 from api.config import settings
 from api.models.schemas import EventReport, EventType
 from api.rules.loader import resolve_relative_datetime
+from api.services.llm import InferenceError, generate as llm_generate
 
 log = logging.getLogger(__name__)
-_model = None
-_tokenizer = None
 
 SYSTEM_PROMPT = """You extract facts from a farmer's or family member's spoken \
-report of a loss. Reply with JSON only. No preamble, no markdown fences.
+report of a loss.
+
+Output a single JSON object and NOTHING else. Do not greet. Do not acknowledge.
+Do not write "Certainly" or "ಖಂಡಿತ" or any preamble. Do not use markdown fences.
+Your entire reply must start with { and end with }.
 
 Schema:
 {
@@ -49,19 +52,45 @@ Rules you must follow:
 """
 
 
-def _load():
-    global _model, _tokenizer
-    if _model is None:
-        from mlx_lm import load
+def _extract_json(text: str) -> str:
+    """Pull the JSON object out of a model response.
 
-        log.info("Loading Gemma from %s", settings.model_path)
-        _model, _tokenizer = load(settings.model_path)
-    return _model, _tokenizer
+    Gemma reliably prefixes answers with conversational filler - "Certainly,",
+    "ಖಂಡಿತ," - and sometimes wraps output in code fences. Both break
+    json.loads. Rather than fight it in the prompt alone, find the outermost
+    balanced {...} and parse that.
+    """
+    text = text.strip()
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text).strip()
 
+    start = text.find("{")
+    if start == -1:
+        return text
 
-def _strip_fences(text: str) -> str:
-    text = re.sub(r"^```(?:json)?", "", text.strip())
-    return re.sub(r"```$", "", text.strip()).strip()
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        char = text[index]
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+    return text[start:]
 
 
 def _mock_payload(transcript: str) -> dict:
@@ -79,22 +108,16 @@ def extract(transcript: str) -> EventReport:
     if settings.mock_mode:
         payload = _mock_payload(transcript)
     else:
-        from mlx_lm import generate
-
-        model, tokenizer = _load()
-        prompt = tokenizer.apply_chat_template(
-            [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": transcript},
-            ],
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        raw = generate(model, tokenizer, prompt=prompt, max_tokens=400)
         try:
-            payload = json.loads(_strip_fences(raw))
+            raw = llm_generate(SYSTEM_PROMPT, transcript, max_tokens=400)
+            payload = json.loads(_extract_json(raw))
         except json.JSONDecodeError:
-            log.warning("Model returned non-JSON, falling back to empty report: %s", raw[:200])
+            # A model that returns prose instead of JSON must not 500. An empty
+            # report becomes a need_info claim, which asks the user a question.
+            log.warning("Model returned non-JSON; falling back to an empty report")
+            payload = {}
+        except InferenceError:
+            log.exception("Inference failed during extraction")
             payload = {}
 
     # Date resolution happens HERE, in code, with a confidence score attached.
@@ -125,4 +148,6 @@ def extract(transcript: str) -> EventReport:
 
 
 def is_loaded() -> bool:
-    return settings.mock_mode or _model is not None
+    from api.services.llm import is_ready
+
+    return is_ready()
