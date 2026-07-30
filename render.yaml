@@ -1,0 +1,36 @@
+# Render blueprint for the HOSTED build (the submission link).
+#
+# This is NOT the build you demo. The demo runs locally on the Mac with Ollama
+# and airplane mode on. Same commit, different LLM_BASE_URL.
+
+services:
+  - type: web
+    name: avadhi-api
+    runtime: python
+    plan: starter          # free tier is 512 MB - see the ASR note below
+    region: singapore      # closest to Ballari; lowest latency for a live click
+    buildCommand: pip install -r requirements-hosted.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DEPLOYMENT
+        value: hosted
+      - key: BACKEND
+        value: server
+      - key: MOCK_MODE
+        value: "false"
+      - key: LANGUAGE
+        value: kn
+      # Small enough to fit the memory budget. Kannada accuracy is lower here
+      # than the `small` model used locally - state that if asked.
+      - key: ASR_BACKEND
+        value: whisper
+      - key: ASR_MODEL
+        value: base
+      # Set these in the Render dashboard, never in this file.
+      - key: LLM_BASE_URL
+        sync: false
+      - key: MODEL_NAME
+        sync: false
+      - key: LLM_API_KEY
+        sync: false

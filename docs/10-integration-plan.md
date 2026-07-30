@@ -1,0 +1,139 @@
+# 10 — Integration plan
+
+The frontend inventory found `app/page.jsx` is a complete visual prototype with **zero
+network code**, using local field names that share nothing with the API contract.
+
+The instinct is to rewrite its data layer. **Don't.** `page.jsx` works, looks right, and its
+language toggle is already correct. Translate at the boundary instead.
+
+---
+
+## The approach: adapter, not rewrite
+
+`ui/lib/adapt.js` maps API shapes onto the field names `page.jsx` already uses:
+
+| API | Local |
+|---|---|
+| `claim.scheme_name_kn` | `schemeKn` |
+| `claim.explanation` | `expl` |
+| `claim.deadline_iso` (ISO) | `deadline` (epoch ms) |
+| `claim.source_url` | `src` |
+| `claim.verified_on` | `verified` |
+| `case.steps[].step_id` | `steps[].id` |
+
+So `initialCases()` becomes `adaptCases(await listCases(), lang)` and **nothing else in
+`page.jsx` changes**. If the contract moves later, only `adapt.js` moves.
+
+`adapt.js` prefers the language-neutral fields (`explanation`, `evidence_checklist`) and falls
+back to `_kn`, so the existing toggle starts working with no per-component edits.
+
+---
+
+## What changed in `ui/lib`
+
+| File | Status |
+|---|---|
+| `api.js` | **Rewritten.** All 13 endpoints. `USE_MOCKS` gates every one — the old file left `fetchDocument()` ungated, which would have thrown in mock mode. |
+| `adapt.js` | **New.** The boundary translation. |
+| `contract-snapshot.json` | **New. Generated** from real backend responses. |
+| `mocks.js` | **Deleted.** Hand-written and drifted — missing `lang`, `case_id`, `explanation`, `evidence_checklist`, `clarifying_options`. |
+
+Regenerate the snapshot after any schema change: `make snapshot`.
+`tests/test_contract_snapshot.py` fails if it goes stale.
+
+The orphaned `components/ClaimCard.jsx`, `Countdown.jsx`, `Recorder.jsx` can be **deleted** —
+their behaviour lives in `page.jsx`. The one exception worth keeping is `Recorder.jsx`, which
+has a correct `MediaRecorder` implementation that `page.jsx` still lacks.
+
+---
+
+## Order of work
+
+Do these one at a time and verify each before moving on. A pile of red at once is
+unresolvable at 2am.
+
+### 1. Case list from the API — 30 min, lowest risk
+Replace `initialCases()` with a `useEffect` that calls `listCases()` and `adaptCases()`.
+Verify with `NEXT_PUBLIC_USE_MOCKS=true` first — the snapshot has four cases covering `open`,
+`closing_soon`, `expired`, and the RBI vertical. Then flip to `false` against the real
+backend.
+
+**Done when:** four cases render with live countdowns from the API, and expired sits at the
+bottom without being hidden.
+
+### 2. Real microphone — 45 min, highest value
+`page.jsx:289` currently fakes it with a `setTimeout`. Port the `MediaRecorder` logic from
+`components/Recorder.jsx`, then call `submitAudio(blob, lang)` — **passing `lang`**, or an
+English speaker gets Kannada back regardless of the toggle.
+
+Replace the hardcoded facts panel (`t.factCropV` etc.) with `adaptIntake(response).facts`.
+
+**Done when:** speaking Kannada produces a real transcript and a real case.
+
+### 3. Checklist ticks — 20 min
+Each step now carries a `step_id`. Wire the tap to `setStepDone(caseId, stepId, done)`.
+
+**Done when:** a tick survives a page reload.
+
+### 4. Real photo capture — 45 min
+`page.jsx:1307` sets `captured: true` but produces no pixels. Add a canvas: `drawImage` from
+the video element, burn the coordinate/time overlay, `toBlob`, then `uploadPhoto()` with lat,
+lon, accuracy and `step_id`.
+
+**Done when:** `GET /api/cases/{id}/photo/{photo_id}` returns the image you just took.
+
+### 5. Real PDF — 15 min
+`page.jsx:546` hand-assembles `%PDF-1.4` bytes. Replace with `fetchDocument(ruleId, event)`.
+Handle the null return in mock mode rather than opening `about:blank`.
+
+### 6. Onboarding S0 / S0b — Javeria, per `09-onboarding-spec.md`
+Backend endpoints exist. `api.js` already has `getCompleteness()`, `scanDocument()`,
+`confirmScan()`, `resetProfile()`, and `adaptScan()` shapes the confirmation screen.
+
+**Gate S0 on `completeness === 0`.** The skip button must be the most prominent element on
+the screen.
+
+---
+
+## Verification after each step
+
+```bash
+# terminal 1
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+# terminal 2
+cd ui && npm run dev:https
+```
+
+Watch the uvicorn log. If the UI is working, you see the request. If you see nothing, the
+call never left the browser — check the rewrite in `next.config.mjs`.
+
+---
+
+## Five traps the inventory surfaced
+
+1. **`fetchDocument()` was ungated by `USE_MOCKS`** — it would have thrown the moment mock
+   mode was on. Fixed in the rewritten `api.js`.
+2. **No `lang` was ever sent with the audio.** The backend auto-detects, so the toggle would
+   have appeared broken. `submitAudio(blob, lang)` now takes it.
+3. **`MOCK_INTAKE` had no `case_id`**, so no mock path could navigate to a case. The snapshot
+   has real ones.
+4. **`ui/certificates/` holds a private key** auto-generated by `next dev --experimental-https`.
+   Gitignored via the bare `*.pem` rule, but confirm before you push. Those certs work for
+   `localhost` only — the phone needs the mkcert pair in `ui/certs/`.
+5. **Mixed content.** `dev:https` serves over TLS while the rewrite target is plain
+   `http://localhost:8000`. Fine today because the rewrite is server-side. It would break
+   under `output: 'export'` — which is correctly absent.
+
+---
+
+## Sequencing with Javeria
+
+Steps 1–5 touch `page.jsx`. Step 6 creates new files. Doing both at once means merge
+conflicts in a 1491-line file.
+
+**Suggested split:** she takes step 6 (S0/S0b, new files only). You take steps 1–5
+(`page.jsx` and `lib/`). Merge after step 3.
+
+If she is already inside `page.jsx`, invert it — she takes 1–5 since she knows the file, and
+you stay on the backend and deployment. Either works; what does not work is both of you in
+`page.jsx` simultaneously.

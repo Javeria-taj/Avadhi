@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.models.schemas import HealthResponse
-from api.routes import cases, document, intake
+from api.routes import cases, document, intake, profile
 from api.rules.loader import load_rules
 from api.config import settings
 from api.services import asr, extract, llm
@@ -47,6 +47,7 @@ app.add_middleware(
 
 app.include_router(intake.router, prefix="/api")
 app.include_router(cases.router, prefix="/api")
+app.include_router(profile.router, prefix="/api")
 app.include_router(document.router, prefix="/api")
 
 
@@ -71,4 +72,5 @@ async def health() -> HealthResponse:
         rules_loaded=len(load_rules()),
         backend="mock" if settings.mock_mode else settings.backend,
         model_name=settings.model_name,
+        deployment=settings.deployment,
     )

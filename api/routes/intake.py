@@ -11,6 +11,7 @@ from api.models.schemas import ClaimStatus, EventType, IntakeResponse
 from api.rules.engine import evaluate
 from api.rules.loader import load_rules
 from api.services import asr, cases as store, explain, extract
+from api.services import profile as profile_store
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -70,6 +71,9 @@ async def intake(
         active = detected if detected in ("kn", "en") else "kn"
 
         event = extract.extract(transcript)
+        # Fill what the profile already knows. What the person just said always
+        # wins - prefill only touches fields the speech left empty.
+        event = profile_store.prefill_event(event)
         claims = evaluate(event, RULES, lang=active)
         claims = explain.attach_explanations(claims, active)
 

@@ -6,6 +6,7 @@ help:
 	@echo "make mock      - API with NO model (works immediately)"
 	@echo "make api       - API with the real model"
 	@echo "make ui        - frontend dev server"
+	@echo "make snapshot  - regenerate ui/lib/contract-snapshot.json from real responses"
 	@echo "make check     - pre-demo: tests + health endpoint"
 
 install:
@@ -23,6 +24,9 @@ api:
 
 ui:
 	cd ui && npm run dev:https
+
+snapshot:
+	python scripts/snapshot_contract.py
 
 check:
 	python -m pytest

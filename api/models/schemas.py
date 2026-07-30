@@ -105,6 +105,81 @@ class ClaimWindow(BaseModel):
     form_id: str | None = None
 
 
+class FieldConfidence(BaseModel):
+    """A value the model read off a document, plus how sure it was.
+
+    Nothing extracted from an image is used until confirmed. A wrong policy
+    number produces a wrong intimation, so the human is always the last step.
+    """
+
+    value: str | None = None
+    confidence: float = 0.0
+    confirmed: bool = False
+
+
+class Profile(BaseModel):
+    """What the app remembers about the person, so reporting takes 30 seconds.
+
+    Deliberately absent: Aadhaar. It is not required to intimate a claim, and
+    storing it would be liability with no benefit. Say this to judges.
+    """
+
+    profile_id: str = "me"
+    updated_at: datetime | None = None
+
+    name: str | None = None
+    mobile: str | None = None
+    district: str | None = None
+    state: str | None = "KA"
+
+    # Crop insurance
+    pmfby_policy_number: FieldConfidence = Field(default_factory=FieldConfidence)
+    insurer: FieldConfidence = Field(default_factory=FieldConfidence)
+    survey_numbers: list[str] = Field(default_factory=list)
+    crop: str | None = None
+    land_acres: float | None = None
+    season: str | None = None
+
+    # Banking. Full number stored locally; display uses the last four only.
+    bank_account_number: FieldConfidence = Field(default_factory=FieldConfidence)
+    bank_ifsc: FieldConfidence = Field(default_factory=FieldConfidence)
+    bank_branch: str | None = None
+
+    has_pmfby_policy: bool | None = None
+    has_bank_account: bool | None = None
+
+    scanned_documents: list[str] = Field(default_factory=list)
+
+    def completeness(self) -> float:
+        """Fraction of the useful fields we have. Drives the quiet nudge on the
+        home screen - never a blocking wall."""
+        checks = [
+            bool(self.mobile),
+            bool(self.district),
+            self.pmfby_policy_number.confirmed,
+            bool(self.survey_numbers),
+            self.bank_account_number.confirmed,
+        ]
+        return round(sum(checks) / len(checks), 2)
+
+    def account_last4(self) -> str | None:
+        number = self.bank_account_number.value
+        return number[-4:] if number and len(number) >= 4 else None
+
+
+class DocumentKind(str, Enum):
+    PMFBY_CERTIFICATE = "pmfby_certificate"
+    BANK_PASSBOOK = "bank_passbook"
+    LAND_RECORD = "land_record"
+
+
+class ScanResult(BaseModel):
+    kind: DocumentKind
+    fields: dict[str, FieldConfidence] = Field(default_factory=dict)
+    needs_confirmation: list[str] = Field(default_factory=list)
+    raw_text: str | None = None
+
+
 class CaseState(str, Enum):
     OPEN = "open"
     REPORTED = "reported"
@@ -177,3 +252,5 @@ class HealthResponse(BaseModel):
     rules_loaded: int
     backend: str = "unknown"
     model_name: str = "unknown"
+    # "local" (offline, on the demo machine) or "hosted" (the submission link)
+    deployment: str = "local"

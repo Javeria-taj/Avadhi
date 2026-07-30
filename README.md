@@ -71,4 +71,4 @@ three sources; verify on pmfby.gov.in before the demo.**
 | `docs/04-demo-qa-writeup.md` | Demo script, judge Q&A, Kaggle skeleton |
 | `docs/05-LOCKED-SPEC.md` | Frozen feature set, screens, work split |
 | `docs/07-bring-up-runbook.md` | Step-by-step bring-up and verification |
-| `docs/08-deployment-two-paths.md` | Mac kiosk vs true on-device on the S24 |
+| `docs/08-deployment.md` | Demo build (Mac, offline) vs hosted build (Render) |

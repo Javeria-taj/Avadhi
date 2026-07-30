@@ -12,3 +12,5 @@ dist/
 data/cases.json
 data/cases.corrupt.json
 data/photos/
+data/profile.json
+data/.snapshot/

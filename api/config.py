@@ -17,6 +17,11 @@ class Settings:
         self.model_name: str = os.getenv("MODEL_NAME", "gemma3:4b")
         self.llm_base_url: str = os.getenv("LLM_BASE_URL", "http://127.0.0.1:11434")
         self.llm_timeout_s: int = int(os.getenv("LLM_TIMEOUT_S", "120"))
+        # Empty for a local server. Set only for a hosted endpoint.
+        self.llm_api_key: str = os.getenv("LLM_API_KEY", "")
+        # "local" or "hosted". Cosmetic - surfaced on /health and in the UI so
+        # nobody has to guess which build they are looking at.
+        self.deployment: str = os.getenv("DEPLOYMENT", "local")
         # "whisper"    = faster-whisper in-process (Mac / Windows / Linux)
         # "whispercpp" = shell out to a whisper.cpp binary (required on Termux,
         #                where ctranslate2 has no aarch64-Android wheel)
