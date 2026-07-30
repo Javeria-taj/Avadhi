@@ -1005,7 +1005,7 @@ export default function Home() {
 
       {/* S3 Case Detail Screen */}
       {screen === 'case' && ac && (
-        <section data-screen-label="S3 Case Detail" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 44px' }}>
+        <section data-screen-label="S3 Case Detail" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 100px' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => setScreen('home')}
@@ -1209,7 +1209,7 @@ export default function Home() {
 
       {/* S4 Capture Evidence Screen */}
       {screen === 'capture' && (
-        <section data-screen-label="S4 Capture Evidence" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 44px' }}>
+        <section data-screen-label="S4 Capture Evidence" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 100px' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => {
@@ -1357,7 +1357,7 @@ export default function Home() {
 
       {/* S5 Document Preview Screen */}
       {screen === 'doc' && ac && (
-        <section data-screen-label="S5 Document Preview" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 44px', background: '#eaf0eb' }}>
+        <section data-screen-label="S5 Document Preview" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 120px', background: '#eaf0eb' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => setScreen('case')}
