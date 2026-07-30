@@ -697,18 +697,18 @@ export default function Home() {
 
       {/* S0 First Run Screen */}
       {screen === 'first_run' && (
-        <section data-screen-label="S0 First Run" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 40px', display: 'flex', flexDirection: 'column' }}>
+        <section data-screen-label="S0 First Run" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 24px', display: 'flex', flexDirection: 'column' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#1b5e3f' }}>{L('ಆನ್ ಬೋರ್ಡಿಂಗ್', 'Onboarding')}</span>
             <span style={{ fontSize: 12, color: '#6f6b63' }}>{completeness === 0 ? L('ಹೊಸ ಬಳಕೆದಾರ', 'New user') : L('ಪ್ರೊಫೈಲ್ ಪೂರ್ಣಗೊಳಿಸಿ', 'Complete profile')}</span>
           </header>
 
-          <div style={{ marginTop: 20 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.s0Heading}</h1>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: '#4a4740', margin: '10px 0 0' }}>{t.s0Sub}</p>
+          <div style={{ marginTop: 12 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.s0Heading}</h1>
+            <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#4a4740', margin: '8px 0 0' }}>{t.s0Sub}</p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 24 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
             {/* Card 1: Scan policy certificate */}
             <div
               onClick={() => {
@@ -718,21 +718,21 @@ export default function Home() {
               style={{
                 background: '#ffffff',
                 border: '1.5px solid #d9d6cf',
-                borderRadius: 18,
-                padding: '20px',
+                borderRadius: 16,
+                padding: '14px 16px',
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 16,
+                gap: 14,
               }}
             >
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#f0ede6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flex: 'none' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#f0ede6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flex: 'none' }}>
                 📄
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, color: '#1c1c1a' }}>{t.scanPolicy}</div>
-                <div style={{ fontSize: 12.5, color: '#6f6b63', marginTop: 3, lineHeight: 1.4 }}>{t.scanPolicySub}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1c1c1a' }}>{t.scanPolicy}</div>
+                <div style={{ fontSize: 12, color: '#6f6b63', marginTop: 2, lineHeight: 1.35 }}>{t.scanPolicySub}</div>
               </div>
             </div>
 
@@ -745,21 +745,21 @@ export default function Home() {
               style={{
                 background: '#ffffff',
                 border: '1.5px solid #d9d6cf',
-                borderRadius: 18,
-                padding: '20px',
+                borderRadius: 16,
+                padding: '14px 16px',
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 16,
+                gap: 14,
               }}
             >
-              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#eaf3ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flex: 'none' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#eaf3ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flex: 'none' }}>
                 🏦
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 17, fontWeight: 700, color: '#1c1c1a' }}>{t.scanPassbook}</div>
-                <div style={{ fontSize: 12.5, color: '#6f6b63', marginTop: 3, lineHeight: 1.4 }}>{t.scanPassbookSub}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1c1c1a' }}>{t.scanPassbook}</div>
+                <div style={{ fontSize: 12, color: '#6f6b63', marginTop: 2, lineHeight: 1.35 }}>{t.scanPassbookSub}</div>
               </div>
             </div>
           </div>
@@ -769,14 +769,14 @@ export default function Home() {
             onClick={() => setScreen('intake')}
             style={{
               width: '100%',
-              minHeight: 70,
+              minHeight: 62,
               background: '#1c1c1a',
               color: '#ffffff',
               border: 'none',
               borderRadius: 999,
-              fontSize: 16.5,
+              fontSize: 16,
               fontWeight: 700,
-              marginTop: 28,
+              marginTop: 18,
               boxShadow: '0 4px 16px rgba(28,28,26,0.25)',
               display: 'flex',
               alignItems: 'center',
@@ -785,7 +785,7 @@ export default function Home() {
               cursor: 'pointer',
             }}
           >
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
             <span>{t.skipToReport}</span>
@@ -794,16 +794,18 @@ export default function Home() {
           {/* Footer line */}
           <div
             style={{
-              fontSize: 12.5,
+              fontSize: 12,
               color: '#1b5e3f',
               fontWeight: 600,
               textAlign: 'center',
-              marginTop: 24,
+              marginTop: 14,
+              marginBottom: 8,
               lineHeight: 1.5,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
+              flex: 'none',
             }}
           >
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
