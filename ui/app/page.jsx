@@ -821,7 +821,7 @@ export default function Home() {
 
           {intake === 'idle' && (
             <>
-              <div style={{ flex: 1, paddingTop: 16 }}>
+              <div style={{ paddingTop: 16, marginBottom: 28 }}>
                 <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.whatHappened}</h1>
                 <p style={{ fontSize: 16, lineHeight: 1.65, color: '#4a4740', margin: '14px 0 0' }}>{t.intakeBody}</p>
               </div>
@@ -858,7 +858,7 @@ export default function Home() {
 
           {intake === 'recording' && (
             <>
-              <div style={{ flex: 1, paddingTop: 16 }}>
+              <div style={{ paddingTop: 16, marginBottom: 28 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#b3341e', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#b3341e', animation: 'pulse 1.2s infinite' }} />
                   {t.listening}
@@ -894,7 +894,7 @@ export default function Home() {
 
           {intake === 'processing' && (
             <>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ paddingTop: 36, marginBottom: 36, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: '#4a4740', animation: 'pulse 1.2s infinite' }}>{t.analysing}</div>
                 <div style={{ fontSize: 12, color: '#9a968d', marginTop: 8 }}>{t.analysingSub}</div>
               </div>
@@ -919,7 +919,7 @@ export default function Home() {
           )}
 
           {intake === 'clarify' && (
-            <div style={{ flex: 1, paddingTop: 20 }}>
+            <div style={{ paddingTop: 16, marginBottom: 20 }}>
               <div style={{ background: '#fafaf8', border: '1px solid #e9e7e2', borderRadius: 14, padding: '14px 16px' }}>
                 <div style={{ fontSize: 12, color: '#6f6b63', marginBottom: 8 }}>{t.factsLabel}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '7px 0', borderTop: '1px solid #eeece7' }}>
