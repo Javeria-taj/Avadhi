@@ -921,7 +921,7 @@ export default function Home() {
           {intake === 'clarify' && (
             <div style={{ paddingTop: 16, marginBottom: 20 }}>
               <div style={{ background: '#fafaf8', border: '1px solid #e9e7e2', borderRadius: 14, padding: '14px 16px' }}>
-                <div style={{ fontSize: 12, color: '#6f6b63', marginBottom: 8 }}>{t.factsLabel}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#4a4740', marginBottom: 8 }}>{t.factsLabel}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '7px 0', borderTop: '1px solid #eeece7' }}>
                   <span style={{ color: '#6f6b63' }}>{t.factCrop}</span>
                   <span style={{ fontWeight: 700 }}>{t.factCropV}</span>
