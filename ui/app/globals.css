@@ -35,8 +35,10 @@
 
 html,
 body,
+#__next,
 #root {
   height: 100%;
+  overflow: hidden;
 }
 
 body {

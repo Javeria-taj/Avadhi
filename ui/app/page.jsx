@@ -493,7 +493,7 @@ export default function Home() {
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', minHeight: '100vh', background: '#f8f7f3', position: 'relative' }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', height: '100vh', background: '#f8f7f3', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Success Toast */}
       {showSuccessToast && (
         <div
@@ -533,6 +533,7 @@ export default function Home() {
           padding: '24px 20px 16px',
           background: '#e2e8e2',
           borderBottom: '1px solid #d0d7cf',
+          flex: 'none',
         }}
       >
         <div>
@@ -585,7 +586,7 @@ export default function Home() {
 
       {/* S1 Home Screen */}
       {screen === 'home' && (
-        <section data-screen-label="S1 Home" style={{ padding: '16px 20px 140px' }}>
+        <section data-screen-label="S1 Home" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 140px' }}>
 
           <div style={{ fontSize: 16, fontWeight: 600, color: '#4a4740', margin: '22px 0 12px' }}>
             {(empty ? 0 : cs.length) + ' ' + L('ಪ್ರಕರಣ ದಾಖಲೆಯಲ್ಲಿ', 'cases on record')}
@@ -733,7 +734,7 @@ export default function Home() {
 
       {/* S2 Voice Intake Screen */}
       {screen === 'intake' && (
-        <section data-screen-label="S2 Voice Intake" style={{ padding: '20px 20px 40px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <section data-screen-label="S2 Voice Intake" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 40px', display: 'flex', flexDirection: 'column' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => {
@@ -929,7 +930,7 @@ export default function Home() {
 
       {/* S3 Case Detail Screen */}
       {screen === 'case' && ac && (
-        <section data-screen-label="S3 Case Detail" style={{ padding: '20px 20px 44px' }}>
+        <section data-screen-label="S3 Case Detail" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 44px' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => setScreen('home')}
@@ -1133,7 +1134,7 @@ export default function Home() {
 
       {/* S4 Capture Evidence Screen */}
       {screen === 'capture' && (
-        <section data-screen-label="S4 Capture Evidence" style={{ padding: '20px 20px 44px' }}>
+        <section data-screen-label="S4 Capture Evidence" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 44px' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => {
@@ -1266,7 +1267,7 @@ export default function Home() {
 
       {/* S5 Document Preview Screen */}
       {screen === 'doc' && ac && (
-        <section data-screen-label="S5 Document Preview" style={{ padding: '20px 20px 44px', background: '#eaf0eb', minHeight: '100vh' }}>
+        <section data-screen-label="S5 Document Preview" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 44px', background: '#eaf0eb' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => setScreen('case')}
