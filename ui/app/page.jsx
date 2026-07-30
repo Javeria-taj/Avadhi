@@ -102,6 +102,21 @@ function initialCases(t0) {
 export default function Home() {
   const t0Ref = useRef(Date.now())
   const [lang, setLang] = useState('kn')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedLang = localStorage.getItem('avadhi_lang')
+      if (savedLang) {
+        setLang(savedLang)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('avadhi_lang', lang)
+    }
+  }, [lang])
   const [screen, setScreen] = useState('home') // 'home' | 'intake' | 'case' | 'capture' | 'doc'
   const [caseId, setCaseId] = useState(null)
   const [now, setNow] = useState(Date.now())
