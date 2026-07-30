@@ -117,9 +117,21 @@ export default function Home() {
       localStorage.setItem('avadhi_lang', lang)
     }
   }, [lang])
-  const [screen, setScreen] = useState('home') // 'home' | 'intake' | 'case' | 'capture' | 'doc'
+  const [screen, setScreen] = useState('first_run') // 'first_run' | 'confirm_doc' | 'home' | 'intake' | 'case' | 'capture' | 'doc'
   const [caseId, setCaseId] = useState(null)
   const [now, setNow] = useState(Date.now())
+
+  // Onboarding & Completeness State
+  const [completeness, setCompleteness] = useState(0) // 0 to 1
+  const [showHomeNudge, setShowHomeNudge] = useState(true)
+  const [docType, setDocType] = useState('policy') // 'policy' | 'passbook'
+  const [docFields, setDocFields] = useState({
+    policyNo: 'PMFBY/2026/894120',
+    surveyNo: '142/2A',
+    area: '2.5',
+    accountNo: '39410291048',
+    ifsc: 'SBIN0001422',
+  })
 
   // Intake states
   const [intake, setIntake] = useState('idle') // 'idle' | 'recording' | 'processing' | 'clarify'
@@ -495,6 +507,18 @@ export default function Home() {
     caseBtn: L('ಪ್ರಕರಣ', 'Case'),
     docDownload: L('ದಾಖಲೆ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ (PDF)', 'Download document (PDF)'),
     docDownloaded: L('✓ PDF ಡೌನ್‌ಲೋಡ್ ಆಗಿದೆ', '✓ PDF Downloaded'),
+    s0Heading: L('ವಿಮೆ ಪತ್ರ ಅಥವಾ ಪಾಸ್‌ಬುಕ್ ಸೇರಿಸಿ', 'Add your policy or passbook'),
+    s0Sub: L('ವರದಿ ಮಾಡುವ ಪ್ರಕ್ರಿಯೆಯನ್ನು 30 ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಪೂರ್ಣಗೊಳಿಸಿ', 'Speed up future damage intimations to under 30 seconds'),
+    scanPolicy: L('ವಿಮೆ ಪತ್ರ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ', 'Scan policy certificate'),
+    scanPolicySub: L('PMFBY, ಬೆಳೆ ವಿಮೆ ರಸೀದಿ, ಸಂಸ್ಥೆಯ ಮಾಹಿತಿ', 'PMFBY policy, premium receipt & crop details'),
+    scanPassbook: L('ಬ್ಯಾಂಕ್ ಪಾಸ್‌ಬುಕ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ', 'Scan bank passbook'),
+    scanPassbookSub: L('ಖಾತೆ ಸಂಖ್ಯೆ, IFSC, ಶಾಖೆಯ ವಿವರಗಳು', 'Account number, IFSC & branch details'),
+    skipToReport: L('ಈಗ ಬೇಡ — ಹಾನಿ ವರದಿ ಮಾಡಬೇಕು', 'Skip — I need to report damage now'),
+    firstRunFooter: L('ಈ ಸಾಧನದಲ್ಲಿ ಮಾತ್ರ ಸಂಗ್ರಹಿಸಲಾಗಿದೆ · ಆಧಾರ್ ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ', 'Stored on this device only · Aadhaar is never collected'),
+    s0bTitle: L('ಪರಿಶೀಲಿಸಿ ಧೃಡೀಕರಿಸಿ', 'Confirm document details'),
+    s0bSub: L('Gemma ಓದಿದ ಮಾಹಿತಿ. ಅಗತ್ಯವಿದ್ದರೆ ಹಳದಿ ಬಾಕ್ಸ್ ಮೇಲೊತ್ತಿ ಬದಲಾಯಿಸಿ.', 'Gemma extracted these fields. Tap amber boxes to edit before persisting.'),
+    confirmSave: L('ಪರಿಶೀಲಿಸಿ ಉಳಿಸಿ', 'Confirm and save'),
+    homeNudge: L('ನಿಮ್ಮ ವಿಮೆ ಪತ್ರ ಸೇರಿಸಿ — ಮುಂದಿನ ಬಾರಿ ವರದಿ ಮಾಡಲು 30 ಸೆಕೆಂಡ್ ಸಾಕು', 'Add your policy certificate — reporting will take 30 seconds next time'),
   }
 
   const generatePdfAndDownload = (targetCase) => {
@@ -671,9 +695,305 @@ export default function Home() {
         </div>
       </header>
 
+      {/* S0 First Run Screen */}
+      {screen === 'first_run' && (
+        <section data-screen-label="S0 First Run" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 40px', display: 'flex', flexDirection: 'column' }}>
+          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#1b5e3f' }}>{L('ಆನ್ ಬೋರ್ಡಿಂಗ್', 'Onboarding')}</span>
+            <span style={{ fontSize: 12, color: '#6f6b63' }}>{completeness === 0 ? L('ಹೊಸ ಬಳಕೆದಾರ', 'New user') : L('ಪ್ರೊಫೈಲ್ ಪೂರ್ಣಗೊಳಿಸಿ', 'Complete profile')}</span>
+          </header>
+
+          <div style={{ marginTop: 20 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.s0Heading}</h1>
+            <p style={{ fontSize: 15, lineHeight: 1.6, color: '#4a4740', margin: '10px 0 0' }}>{t.s0Sub}</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 24 }}>
+            {/* Card 1: Scan policy certificate */}
+            <div
+              onClick={() => {
+                setDocType('policy')
+                setScreen('confirm_doc')
+              }}
+              style={{
+                background: '#ffffff',
+                border: '1.5px solid #d9d6cf',
+                borderRadius: 18,
+                padding: '20px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+              }}
+            >
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#f0ede6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flex: 'none' }}>
+                📄
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#1c1c1a' }}>{t.scanPolicy}</div>
+                <div style={{ fontSize: 12.5, color: '#6f6b63', marginTop: 3, lineHeight: 1.4 }}>{t.scanPolicySub}</div>
+              </div>
+            </div>
+
+            {/* Card 2: Scan bank passbook */}
+            <div
+              onClick={() => {
+                setDocType('passbook')
+                setScreen('confirm_doc')
+              }}
+              style={{
+                background: '#ffffff',
+                border: '1.5px solid #d9d6cf',
+                borderRadius: 18,
+                padding: '20px',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+              }}
+            >
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: '#eaf3ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flex: 'none' }}>
+                🏦
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#1c1c1a' }}>{t.scanPassbook}</div>
+                <div style={{ fontSize: 12.5, color: '#6f6b63', marginTop: 3, lineHeight: 1.4 }}>{t.scanPassbookSub}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Third, visually primary action (the most prominent element on screen) */}
+          <button
+            onClick={() => setScreen('intake')}
+            style={{
+              width: '100%',
+              minHeight: 70,
+              background: '#1c1c1a',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 999,
+              fontSize: 16.5,
+              fontWeight: 700,
+              marginTop: 28,
+              boxShadow: '0 4px 16px rgba(28,28,26,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              cursor: 'pointer',
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+            <span>{t.skipToReport}</span>
+          </button>
+
+          {/* Footer line */}
+          <div
+            style={{
+              fontSize: 12.5,
+              color: '#1b5e3f',
+              fontWeight: 600,
+              textAlign: 'center',
+              marginTop: 24,
+              lineHeight: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            {t.firstRunFooter}
+          </div>
+        </section>
+      )}
+
+      {/* S0b Confirm Details Screen */}
+      {screen === 'confirm_doc' && (
+        <section data-screen-label="S0b Confirm Doc" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 40px', display: 'flex', flexDirection: 'column' }}>
+          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              onClick={() => setScreen('first_run')}
+              style={{
+                background: '#ffffff',
+                border: '1px solid #d9d6cf',
+                borderRadius: 999,
+                padding: '6px 15px',
+                fontSize: 13,
+                fontWeight: 700,
+                color: '#1c1c1a',
+                minHeight: 34,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {t.back}
+            </button>
+            <span style={{ fontSize: 12, color: '#6f6b63' }}>{docType === 'policy' ? L('ವಿಮೆ ಪತ್ರ OCR', 'Policy OCR') : L('ಪಾಸ್‌ಬುಕ್ OCR', 'Passbook OCR')}</span>
+          </header>
+
+          <div style={{ marginTop: 18 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.s0bTitle}</h1>
+            <p style={{ fontSize: 14.5, lineHeight: 1.55, color: '#4a4740', margin: '8px 0 0' }}>{t.s0bSub}</p>
+          </div>
+
+          {/* Small Confirmed Chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 18 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, background: '#eaf3ee', color: '#1b5e3f', borderRadius: 999, padding: '5px 12px', border: '1px solid #b7e0ca' }}>
+              ✓ Insurer: PMFBY (96%)
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, background: '#eaf3ee', color: '#1b5e3f', borderRadius: 999, padding: '5px 12px', border: '1px solid #b7e0ca' }}>
+              ✓ Crop: Cotton (98%)
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, background: '#eaf3ee', color: '#1b5e3f', borderRadius: 999, padding: '5px 12px', border: '1px solid #b7e0ca' }}>
+              ✓ Season: Kharif 2026 (95%)
+            </span>
+          </div>
+
+          {/* Needs Confirmation Fields - Large Monospace, Amber Bordered, Confidence Shown */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 18 }}>
+            {docType === 'policy' ? (
+              <>
+                <div style={{ background: '#fffbeb', border: '2px solid #d97706', borderRadius: 16, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#b45309', marginBottom: 6 }}>
+                    <span>{L('ವಿಮೆ ಪಾಲಿಸಿ ಸಂಖ್ಯೆ', 'Policy Number')}</span>
+                    <span>{L('ವಿಶ್ವಾಸಾರ್ಹತೆ 88%', '88% confidence')}</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={docFields.policyNo}
+                    onChange={(e) => setDocFields({ ...docFields, policyNo: e.target.value })}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: 19, fontWeight: 700, border: 'none', background: 'transparent', color: '#1c1c1a', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ background: '#fffbeb', border: '2px solid #d97706', borderRadius: 16, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#b45309', marginBottom: 6 }}>
+                    <span>{L('ಸರ್ವೆ ಸಂಖ್ಯೆ', 'Survey Number')}</span>
+                    <span>{L('ವಿಶ್ವಾಸಾರ್ಹತೆ 82%', '82% confidence')}</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={docFields.surveyNo}
+                    onChange={(e) => setDocFields({ ...docFields, surveyNo: e.target.value })}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: 19, fontWeight: 700, border: 'none', background: 'transparent', color: '#1c1c1a', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ background: '#fffbeb', border: '2px solid #d97706', borderRadius: 16, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#b45309', marginBottom: 6 }}>
+                    <span>{L('ವಿಸ್ತೀರ್ಣ (ಎಕರೆ)', 'Insured Area (Acres)')}</span>
+                    <span>{L('ವಿಶ್ವಾಸಾರ್ಹತೆ 91%', '91% confidence')}</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={docFields.area}
+                    onChange={(e) => setDocFields({ ...docFields, area: e.target.value })}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: 19, fontWeight: 700, border: 'none', background: 'transparent', color: '#1c1c1a', outline: 'none' }}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ background: '#fffbeb', border: '2px solid #d97706', borderRadius: 16, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#b45309', marginBottom: 6 }}>
+                    <span>{L('ಬ್ಯಾಂಕ್ ಖಾತೆ ಸಂಖ್ಯೆ', 'Account Number')}</span>
+                    <span>{L('ವಿಶ್ವಾಸಾರ್ಹತೆ 85%', '85% confidence')}</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={docFields.accountNo}
+                    onChange={(e) => setDocFields({ ...docFields, accountNo: e.target.value })}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: 19, fontWeight: 700, border: 'none', background: 'transparent', color: '#1c1c1a', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ background: '#fffbeb', border: '2px solid #d97706', borderRadius: 16, padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#b45309', marginBottom: 6 }}>
+                    <span>{L('IFSC ಕೋಡ್', 'IFSC Code')}</span>
+                    <span>{L('ವಿಶ್ವಾಸಾರ್ಹತೆ 94%', '94% confidence')}</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={docFields.ifsc}
+                    onChange={(e) => setDocFields({ ...docFields, ifsc: e.target.value })}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: 19, fontWeight: 700, border: 'none', background: 'transparent', color: '#1c1c1a', outline: 'none' }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Confirm and save button */}
+          <button
+            onClick={() => {
+              setCompleteness(1)
+              setShowSuccessToast(true)
+              setTimeout(() => {
+                setShowSuccessToast(false)
+                setScreen('home')
+              }, 2000)
+            }}
+            style={{
+              width: '100%',
+              minHeight: 64,
+              background: '#1b5e3f',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 999,
+              fontSize: 16.5,
+              fontWeight: 700,
+              marginTop: 26,
+              cursor: 'pointer',
+            }}
+          >
+            {t.confirmSave}
+          </button>
+        </section>
+      )}
+
       {/* S1 Home Screen */}
       {screen === 'home' && (
         <section data-screen-label="S1 Home" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 140px' }}>
+
+          {completeness < 1 && showHomeNudge && (
+            <div
+              style={{
+                background: '#fef3c7',
+                border: '1px solid #fde68a',
+                borderRadius: 12,
+                padding: '10px 14px',
+                marginBottom: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10,
+              }}
+            >
+              <div
+                onClick={() => setScreen('first_run')}
+                style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#92400e', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>📄</span>
+                <span>{t.homeNudge}</span>
+              </div>
+              <button
+                onClick={() => setShowHomeNudge(false)}
+                style={{ background: 'none', border: 'none', color: '#b45309', fontSize: 16, fontWeight: 700, cursor: 'pointer', padding: '0 4px' }}
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <div style={{ fontSize: 16, fontWeight: 600, color: '#4a4740', margin: '22px 0 12px' }}>
             {(empty ? 0 : cs.length) + ' ' + L('ಪ್ರಕರಣ ದಾಖಲೆಯಲ್ಲಿ', 'cases on record')}
