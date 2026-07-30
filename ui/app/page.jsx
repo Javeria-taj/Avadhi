@@ -36,6 +36,20 @@ export default function Narrative() {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+
+    const enterBtn = root.querySelector('#enter-app-btn');
+    if (enterBtn) {
+      const handleEnter = () => {
+        window.location.href = '/app';
+      };
+      enterBtn.addEventListener('click', handleEnter);
+      return () => enterBtn.removeEventListener('click', handleEnter);
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
     
     root.querySelectorAll('[data-lang]').forEach(el => { el.style.display = el.dataset.lang === lang ? '' : 'none'; });
     root.querySelectorAll('[data-langbtn]').forEach(el => { el.style.display = el.dataset.langbtn === (lang === 'en' ? 'kn' : 'en') ? '' : 'none'; });
@@ -663,7 +677,7 @@ export default function Narrative() {
             <div style="display:flex;justify-content:space-between;font-size:12px;color:#6f6b63;margin-top:7px"><span><span data-lang="en">Due </span><span data-lang="kn" style="display:none">ಗಡುವು </span>01 AUG 21:26</span><span>1/5 <span data-lang="en">steps</span><span data-lang="kn" style="display:none">ಹಂತ</span></span></div>
           </div>
           <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,#f8f7f3 70%,rgba(248,247,243,0));padding:20px">
-            <button style="width:100%;min-height:64px;background:#1c1c1a;color:#fff;border:none;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 20px;font-family:inherit;cursor:pointer" style-hover="background:#2e2d2a">
+            <button style="width:100%;min-height:64px;background:#1c1c1a;color:#fff;border:none;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 20px;font-family:inherit;cursor:pointer" style-hover="background:#2e2d2a" id="enter-app-btn">
               <svg viewBox="0 0 24 24" width="22" height="22"><rect x="9" y="2" width="6" height="12" rx="3" fill="currentColor"></rect><path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="currentColor" stroke-width="2"></path><line x1="12" y1="18" x2="12" y2="23" stroke="currentColor" stroke-width="2"></line></svg>
               <span style="text-align:left"><span style="display:block;font-size:17px;font-weight:700;line-height:1.25"><span data-lang="en">Report a loss</span><span data-lang="kn" style="display:none">ನಷ್ಟ ವರದಿ ಮಾಡಿ</span></span><span style="display:block;font-size:11px;opacity:.7;margin-top:1px"><span data-lang="en">Tap and speak — no reading needed</span><span data-lang="kn" style="display:none">ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಿ · Report a loss</span></span></span>
             </button>
