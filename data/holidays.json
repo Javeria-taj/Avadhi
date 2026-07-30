@@ -1,0 +1,11 @@
+{
+  "_note": "Declared bank holidays. Sundays and 2nd/4th Saturdays are computed in code and must NOT be listed here.",
+  "_verify": "ONLY fixed-date national holidays are listed below. Karnataka state holidays and lunar-calendar festivals (Ugadi, Diwali, Eid, etc.) shift year to year and are NOT included - we did not want to assert dates we could not source. Before relying on this in the field, replace with the RBI holiday list for the relevant state and year. The engine treats an incomplete holiday list conservatively: a missing holiday makes the computed deadline EARLIER than the true one, which is the safe direction to be wrong.",
+  "_state": "KA",
+  "_year": 2026,
+  "dates": [
+    "2026-01-26",
+    "2026-08-15",
+    "2026-10-02"
+  ]
+}

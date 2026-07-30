@@ -1,6 +1,6 @@
 .venv/
 node_modules/
-models/
+/models/
 *.pem
 certs/*.pem
 .env

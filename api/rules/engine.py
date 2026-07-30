@@ -131,18 +131,34 @@ def evaluate(
             )
             continue
 
-        delta = _window_delta(rule)
-        if delta is None or event.event_datetime is None:
+        start_field = rule.get("window_starts_at") or "event_datetime"
+        start_time = event.get(start_field)
+
+        if start_time is None:
             results.append(
                 ClaimWindow(
                     status=ClaimStatus.NEED_INFO,
-                    missing_info=["event_datetime"],
+                    missing_info=[start_field],
                     **base,
                 )
             )
             continue
 
-        deadline = _as_ist(event.event_datetime) + delta
+        if rule.get("window_working_days") is not None:
+            from api.rules.workdays import working_day_deadline
+            deadline = working_day_deadline(start_time, rule["window_working_days"])
+        else:
+            delta = _window_delta(rule)
+            if delta is None:
+                results.append(
+                    ClaimWindow(
+                        status=ClaimStatus.NEED_INFO,
+                        missing_info=[start_field],
+                        **base,
+                    )
+                )
+                continue
+            deadline = _as_ist(start_time) + delta
         hours_remaining = (deadline - current).total_seconds() / 3600.0
 
         if hours_remaining <= 0:

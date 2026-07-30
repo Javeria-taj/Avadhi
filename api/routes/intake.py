@@ -49,12 +49,19 @@ async def intake(audio: UploadFile = File(...)) -> IntakeResponse:
         elif needs_confirmation:
             question = ASK_DATE_KN
 
+        case_id = None
+        if claims:
+            from api.services.cases import create_case
+            case = create_case(event, claims[0])
+            case_id = case.case_id
+
         return IntakeResponse(
             transcript=transcript,
             event=event,
             claims=claims,
             clarifying_question_kn=question,
             needs_date_confirmation=needs_confirmation,
+            case_id=case_id,
         )
     finally:
         Path(tmp_path).unlink(missing_ok=True)

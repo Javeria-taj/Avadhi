@@ -21,6 +21,7 @@ class Settings:
         self.mock_mode: bool = os.getenv("MOCK_MODE", "false").lower() == "true"
         self.schemes_dir: Path = Path(os.getenv("SCHEMES_DIR", ROOT / "data" / "schemes"))
         self.forms_dir: Path = Path(os.getenv("FORMS_DIR", ROOT / "data" / "forms"))
+        self.data_dir: Path = Path(os.getenv("DATA_DIR", ROOT / "data"))
 
         if not self.mock_mode and not Path(self.model_path).exists():
             raise RuntimeError(

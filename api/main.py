@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.models.schemas import HealthResponse
-from api.routes import document, intake
+from api.routes import cases, document, intake
 from api.rules.loader import load_rules
 from api.services import asr, extract
 
@@ -31,6 +31,7 @@ app.add_middleware(
 
 app.include_router(intake.router, prefix="/api")
 app.include_router(document.router, prefix="/api")
+app.include_router(cases.router, prefix="/api")
 
 
 @app.exception_handler(Exception)

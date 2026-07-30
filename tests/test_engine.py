@@ -8,7 +8,7 @@ run them again before the demo.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 
@@ -180,3 +180,59 @@ def test_every_rule_cites_a_source():
     for rule in RULES:
         assert rule.get("source_url"), f"{rule['rule_id']} has no source_url"
         assert rule.get("verified_on"), f"{rule['rule_id']} has no verified_on"
+
+
+# --- the bank-fraud vertical --------------------------------------------------
+
+def test_unauthorised_transaction_clock_runs_from_bank_communication():
+    """The RBI clock starts from the bank's alert, NOT from when the customer
+    noticed. Using the wrong field would silently shift the deadline."""
+    event = EventReport(
+        event_type=EventType.UNAUTHORISED_TRANSACTION,
+        # Customer noticed days later - this must be ignored for the deadline.
+        event_datetime=NOW - timedelta(days=5),
+        bank_communication_datetime=datetime(2026, 7, 29, 14, 0, tzinfo=IST),
+        has_bank_account=True,
+        transaction_amount=18400.0,
+    )
+    claim = _find(evaluate(event, RULES, now=NOW), "RBI_UNAUTH_TXN")
+    assert claim is not None
+    # 29 Jul 2026 is a Wednesday. +3 working days -> Thu 30, Fri 31, Sat 1 Aug
+    # (1st Saturday, open) -> deadline 1 Aug.
+    assert claim.deadline_iso.date() == date(2026, 8, 1)
+    assert claim.status is ClaimStatus.OPEN
+
+
+def test_missing_bank_communication_date_asks_for_it():
+    event = EventReport(
+        event_type=EventType.UNAUTHORISED_TRANSACTION,
+        has_bank_account=True,
+    )
+    claim = _find(evaluate(event, RULES, now=NOW), "RBI_UNAUTH_TXN")
+    assert claim.status is ClaimStatus.NEED_INFO
+    assert "bank_communication_datetime" in claim.missing_info
+
+
+def test_crop_event_does_not_trigger_the_bank_rule():
+    ids = {c.rule_id for c in evaluate(hail_event(), RULES, now=NOW)}
+    assert "RBI_UNAUTH_TXN" not in ids
+
+
+def test_bank_event_does_not_trigger_the_crop_rule():
+    event = EventReport(
+        event_type=EventType.UNAUTHORISED_TRANSACTION,
+        bank_communication_datetime=NOW - timedelta(days=1),
+        has_bank_account=True,
+    )
+    ids = {c.rule_id for c in evaluate(event, RULES, now=NOW)}
+    assert "PMFBY_LOCALISED" not in ids
+
+
+def test_expired_bank_claim_is_still_reported():
+    event = EventReport(
+        event_type=EventType.UNAUTHORISED_TRANSACTION,
+        bank_communication_datetime=datetime(2026, 6, 1, 10, 0, tzinfo=IST),
+        has_bank_account=True,
+    )
+    claim = _find(evaluate(event, RULES, now=NOW), "RBI_UNAUTH_TXN")
+    assert claim.status is ClaimStatus.EXPIRED
