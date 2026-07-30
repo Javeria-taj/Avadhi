@@ -136,13 +136,6 @@ export default function Home() {
   const checklistRef = useRef(null)
   const savedChecklistScrollRef = useRef(350)
 
-  useEffect(() => {
-    if (screen === 'case' && s3SectionRef.current) {
-      const targetScroll = savedChecklistScrollRef.current > 0 ? savedChecklistScrollRef.current : 350
-      s3SectionRef.current.scrollTop = targetScroll
-    }
-  }, [screen, cases])
-
   // Document states
   const [docReady, setDocReady] = useState(true)
   const [shareFlash, setShareFlash] = useState(false)
@@ -239,6 +232,13 @@ export default function Home() {
   useEffect(() => {
     setCases(initialCases(t0Ref.current))
   }, [])
+
+  useEffect(() => {
+    if (screen === 'case' && s3SectionRef.current) {
+      const targetScroll = savedChecklistScrollRef.current > 0 ? savedChecklistScrollRef.current : 350
+      s3SectionRef.current.scrollTop = targetScroll
+    }
+  }, [screen, cases])
 
   // Timer loop
   useEffect(() => {
