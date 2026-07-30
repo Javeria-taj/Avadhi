@@ -1,0 +1,11 @@
+[project]
+name = "claim-window-navigator"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+# Without this, `pytest` only works if you happen to run it from the repo root.
+# At 3am you will not be in the repo root.
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"

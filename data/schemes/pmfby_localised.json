@@ -1,0 +1,57 @@
+{
+  "rule_id": "PMFBY_LOCALISED",
+  "scheme_name_en": "Pradhan Mantri Fasal Bima Yojana - localised calamity",
+  "scheme_name_kn": "ಪ್ರಧಾನ ಮಂತ್ರಿ ಫಸಲ್ ಬಿಮಾ ಯೋಜನೆ",
+  "trigger_predicates": [
+    {
+      "field": "event_type",
+      "op": "in",
+      "value": [
+        "hailstorm",
+        "landslide",
+        "inundation",
+        "waterlogging",
+        "cloudburst",
+        "post_harvest_loss"
+      ]
+    },
+    { "field": "has_pmfby_policy", "op": "==", "value": true }
+  ],
+  "window_hours": 72,
+  "window_days": null,
+  "window_starts_at": "event_datetime",
+  "channels": [
+    "Crop Insurance mobile app",
+    "pmfby.gov.in - Report Crop Loss",
+    "Krishi Rakshak Helpline (VERIFY NUMBER ON pmfby.gov.in BEFORE DEMO)",
+    "Insurance company call centre - number printed on your policy certificate",
+    "Your financing bank branch",
+    "District or block agriculture officer"
+  ],
+  "required_at_intimation": [
+    "policy_number",
+    "survey_number_wise_crop_and_acreage_affected",
+    "cause_of_loss",
+    "date_and_time_of_event",
+    "bank_account_number"
+  ],
+  "evidence_checklist_kn": [
+    "ಹೊಲದ ಪೂರ್ತಿ ನೋಟದ ಫೋಟೋ ತೆಗೆಯಿರಿ - ಹಾನಿಯ ವ್ಯಾಪ್ತಿ ಕಾಣಬೇಕು",
+    "ಹಾನಿಯಾದ ಬೆಳೆಯ ಹತ್ತಿರದ ಫೋಟೋಗಳು - ಬೇರೆ ಬೇರೆ ಜಾಗದಿಂದ",
+    "ಸ್ಥಳ ಗುರುತಿಸಲು ಗಡಿ ಕಲ್ಲು ಅಥವಾ ಗುರುತು ಫೋಟೋದಲ್ಲಿ ಇರಲಿ",
+    "ಸರ್ವೆ ನಂಬರ್ ಕಲ್ಲಿನ ಫೋಟೋ ಇದ್ದರೆ ತೆಗೆಯಿರಿ",
+    "ಹಾನಿ ಆದ ದಿನಾಂಕ ಮತ್ತು ಸಮಯ ಬರೆದಿಟ್ಟುಕೊಳ್ಳಿ",
+    "ಪಾಲಿಸಿ ಪ್ರಮಾಣಪತ್ರ ಮತ್ತು ಬ್ಯಾಂಕ್ ಪಾಸ್‌ಬುಕ್ ಹತ್ತಿರ ಇಟ್ಟುಕೊಳ್ಳಿ"
+  ],
+  "downstream_timeline": [
+    "Insurer deputes a loss assessor within 48 hours of intimation",
+    "Survey completed within about 10 days of appointment",
+    "Claim released on the basis of individual loss assessment"
+  ],
+  "failure_consequence_kn": "72 ಗಂಟೆಯೊಳಗೆ ತಿಳಿಸದಿದ್ದರೆ, ನಿಜವಾಗಿ ಬೆಳೆ ಹಾನಿಯಾಗಿದ್ದರೂ ಕ್ಲೇಮ್ ತಿರಸ್ಕೃತವಾಗಬಹುದು.",
+  "benefit_summary_kn": "ಸ್ಥಳೀಯ ವಿಪತ್ತಿನಿಂದ ಆದ ಬೆಳೆ ಹಾನಿಗೆ ವೈಯಕ್ತಿಕ ನಷ್ಟ ಮೌಲ್ಯಮಾಪನದ ಆಧಾರದ ಮೇಲೆ ಪರಿಹಾರ.",
+  "form_id": "pmfby_intimation_v1",
+  "source_url": "https://pmfby.gov.in/",
+  "verified_on": "2026-07-29",
+  "verification_note": "72-hour intimation window for localised calamities and post-harvest losses confirmed across multiple independent sources, which also identify missing this window as the most common cause of claim rejection. Helpline number differs between sources (14447 / 1800-200-7710 / 1800-180-1551) - VERIFY on pmfby.gov.in before quoting."
+}

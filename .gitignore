@@ -1,0 +1,11 @@
+.venv/
+node_modules/
+models/
+*.pem
+certs/*.pem
+.env
+.env.local
+__pycache__/
+*.pyc
+.next/
+dist/

@@ -1,0 +1,34 @@
+{
+  "rule_id": "PMJJBY_DEATH",
+  "scheme_name_en": "Pradhan Mantri Jeevan Jyoti Bima Yojana - death claim",
+  "scheme_name_kn": "ಪ್ರಧಾನ ಮಂತ್ರಿ ಜೀವನ್ ಜ್ಯೋತಿ ಬಿಮಾ ಯೋಜನೆ",
+  "trigger_predicates": [
+    { "field": "event_type", "op": "in", "value": ["death", "accidental_death"] },
+    { "field": "has_pmjjby", "op": "==", "value": true }
+  ],
+  "window_hours": null,
+  "window_days": 30,
+  "window_starts_at": "event_datetime",
+  "channels": [
+    "The bank or post office where the premium was debited"
+  ],
+  "required_at_intimation": [
+    "claim_cum_discharge_form",
+    "death_certificate",
+    "nominee_kyc",
+    "passbook_first_two_pages"
+  ],
+  "evidence_checklist_kn": [
+    "ಪ್ರೀಮಿಯಂ ಕಡಿತವಾದ ಬ್ಯಾಂಕ್ ಶಾಖೆಗೆ ಮೊದಲು ತಿಳಿಸಿ",
+    "ಮರಣ ಪ್ರಮಾಣಪತ್ರ - ರಿಜಿಸ್ಟ್ರಾರ್ ನೀಡಿದ್ದು",
+    "ಕ್ಲೇಮ್-ಕಮ್-ಡಿಸ್ಚಾರ್ಜ್ ಫಾರ್ಮ್",
+    "ನಾಮಿನಿಯ ಕೆವೈಸಿ ದಾಖಲೆಗಳು",
+    "ಪಾಸ್‌ಬುಕ್‌ನ ಮೊದಲ ಎರಡು ಪುಟಗಳ ಪ್ರತಿ"
+  ],
+  "failure_consequence_kn": "30 ದಿನಗಳೊಳಗೆ ನಾಮಿನಿ ಕ್ಲೇಮ್ ಸಲ್ಲಿಸಬೇಕು.",
+  "benefit_summary_kn": "ಯಾವುದೇ ಕಾರಣದ ಮರಣಕ್ಕೆ 2 ಲಕ್ಷ ರೂ ಜೀವ ವಿಮೆ.",
+  "form_id": "pmjjby_claim_v1",
+  "source_url": "https://jansuraksha.gov.in/",
+  "verified_on": "2026-07-29",
+  "verification_note": "30-day filing window widely stated. UNRESOLVED CONFLICT: the waiting period after joining is stated as 30 days in LIC's claim procedure document and 45 days in SBI's version of the same document. Waiting-period logic is deliberately NOT encoded as a predicate here - do not assert a number you cannot source."
+}

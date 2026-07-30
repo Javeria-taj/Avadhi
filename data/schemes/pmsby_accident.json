@@ -1,0 +1,36 @@
+{
+  "rule_id": "PMSBY_ACCIDENT",
+  "scheme_name_en": "Pradhan Mantri Suraksha Bima Yojana - accident claim",
+  "scheme_name_kn": "ಪ್ರಧಾನ ಮಂತ್ರಿ ಸುರಕ್ಷಾ ಬಿಮಾ ಯೋಜನೆ",
+  "trigger_predicates": [
+    { "field": "event_type", "op": "in", "value": ["accidental_death", "disability"] },
+    { "field": "has_pmsby", "op": "==", "value": true }
+  ],
+  "window_hours": null,
+  "window_days": 30,
+  "window_starts_at": "event_datetime",
+  "channels": [
+    "The bank branch where the PMSBY premium was auto-debited",
+    "Insurance company designated office"
+  ],
+  "required_at_intimation": [
+    "claim_cum_discharge_form",
+    "death_or_disability_certificate",
+    "FIR_copy",
+    "nominee_aadhaar_and_bank_details",
+    "passbook_first_two_pages"
+  ],
+  "evidence_checklist_kn": [
+    "ಕ್ಲೇಮ್-ಕಮ್-ಡಿಸ್ಚಾರ್ಜ್ ಫಾರ್ಮ್ ಬ್ಯಾಂಕಿನಿಂದ ಪಡೆಯಿರಿ",
+    "ಮರಣ ಪ್ರಮಾಣಪತ್ರ ಅಥವಾ ಅಂಗವೈಕಲ್ಯ ಪ್ರಮಾಣಪತ್ರ",
+    "ಎಫ್‌ಐಆರ್ ಪ್ರತಿ - ಅಪಘಾತದ ಪ್ರಕರಣಕ್ಕೆ ಕಡ್ಡಾಯ",
+    "ನಾಮಿನಿಯ ಆಧಾರ್ ಮತ್ತು ಬ್ಯಾಂಕ್ ವಿವರ",
+    "ಪಾಸ್‌ಬುಕ್‌ನ ಮೊದಲ ಎರಡು ಪುಟಗಳ ಪ್ರತಿ"
+  ],
+  "failure_consequence_kn": "30 ದಿನಗಳೊಳಗೆ ಬ್ಯಾಂಕಿಗೆ ಸಲ್ಲಿಸದಿದ್ದರೆ ಕ್ಲೇಮ್ ವಿಳಂಬ ಅಥವಾ ತಿರಸ್ಕಾರ ಆಗಬಹುದು.",
+  "benefit_summary_kn": "ಅಪಘಾತ ಮರಣ ಅಥವಾ ಪೂರ್ಣ ಅಂಗವೈಕಲ್ಯಕ್ಕೆ 2 ಲಕ್ಷ ರೂ, ಭಾಗಶಃ ಅಂಗವೈಕಲ್ಯಕ್ಕೆ 1 ಲಕ್ಷ ರೂ.",
+  "form_id": "pmsby_claim_v1",
+  "source_url": "https://jansuraksha.gov.in/",
+  "verified_on": "2026-07-29",
+  "verification_note": "30-day submission window widely stated across insurer and aggregator sources. Confirm against the current official Jan Suraksha claim procedure document before relying on it."
+}

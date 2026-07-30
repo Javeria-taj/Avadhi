@@ -1,0 +1,211 @@
+/* Design notes, so the choices survive a tired 3am edit.
+ *
+ * Subject: a farmer standing in a damaged field, on a phone, in daylight,
+ * with a clock running. The screen has one job: how long is left, and what
+ * to do right now.
+ *
+ * - No web fonts. This runs offline; a network font is a blank screen.
+ *   Kannada renders through Noto Sans Kannada if present, else system.
+ * - High contrast and large type: phone screens in sun are unreadable at
+ *   the usual greys.
+ * - Colour carries status, never decoration. Green/amber/red map to
+ *   open/closing_soon/expired and to nothing else.
+ * - The countdown is the one loud element. Everything else stays quiet.
+ */
+
+:root {
+  --ink: #14181c;
+  --ink-soft: #4a5158;
+  --paper: #f2f1ec;
+  --card: #ffffff;
+  --rule: #d6d3c9;
+
+  --open: #1b5e3f;
+  --soon: #b06a00;
+  --expired: #8c8880;
+  --urgent: #b3341e;
+
+  --kn: 'Noto Sans Kannada', 'Nirmala UI', system-ui, sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--kn);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+.shell {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 16px 64px;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.offline-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 2px solid var(--ink);
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.offline-dot { width: 7px; height: 7px; background: var(--open); border-radius: 50%; }
+
+/* --- the signature element ------------------------------------------------ */
+
+.countdown {
+  margin: 22px 0;
+  padding: 26px 20px;
+  background: var(--card);
+  border: 3px solid var(--open);
+  border-left-width: 14px;
+}
+
+.countdown[data-status='closing_soon'] { border-color: var(--soon); }
+.countdown[data-status='expired'] { border-color: var(--expired); }
+.countdown[data-status='need_info'] { border-color: var(--ink-soft); }
+
+.countdown-value {
+  font-family: var(--mono);
+  font-size: clamp(56px, 19vw, 92px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--open);
+}
+
+.countdown[data-status='closing_soon'] .countdown-value { color: var(--soon); }
+.countdown[data-status='expired'] .countdown-value { color: var(--expired); }
+
+.countdown-unit { font-size: 0.3em; letter-spacing: 0.06em; margin-left: 10px; }
+.countdown-deadline { margin-top: 12px; font-family: var(--mono); font-size: 13px; color: var(--ink-soft); }
+
+/* --- record button -------------------------------------------------------- */
+
+.record {
+  width: 100%;
+  min-height: 76px;
+  border: 3px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--kn);
+  font-size: 19px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.record[data-recording='true'] { background: var(--urgent); border-color: var(--urgent); }
+.record:disabled { opacity: 0.5; cursor: wait; }
+.record:focus-visible { outline: 4px solid var(--soon); outline-offset: 3px; }
+
+.pulse { width: 13px; height: 13px; border-radius: 50%; background: currentColor; animation: pulse 1.1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* --- cards ---------------------------------------------------------------- */
+
+.card { background: var(--card); border: 2px solid var(--rule); padding: 18px; margin-bottom: 16px; }
+.card h2 { margin: 0 0 4px; font-size: 19px; line-height: 1.35; }
+
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 2px solid currentColor;
+  margin-bottom: 10px;
+}
+
+.badge[data-status='open'] { color: var(--open); }
+.badge[data-status='closing_soon'] { color: var(--soon); }
+.badge[data-status='expired'] { color: var(--expired); }
+.badge[data-status='need_info'] { color: var(--ink-soft); }
+
+.explain { font-size: 18px; margin: 10px 0 14px; }
+
+.checklist { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+
+.checklist li {
+  counter-increment: step;
+  display: flex;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid var(--rule);
+}
+
+/* Numbered because the order genuinely matters — photograph the wide shot
+ * before you walk into the field and disturb it. */
+.checklist li::before {
+  content: counter(step);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  min-width: 20px;
+  padding-top: 3px;
+}
+
+.channels { margin: 14px 0 0; padding-left: 20px; font-size: 15px; color: var(--ink-soft); }
+
+.source {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  word-break: break-all;
+}
+
+.action {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 16px;
+  border: 3px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--kn);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.action:focus-visible { outline: 4px solid var(--soon); outline-offset: 3px; }
+
+.notice { border: 2px solid var(--soon); padding: 14px; margin-bottom: 16px; background: #fff8ec; }
+.error { border: 2px solid var(--urgent); padding: 14px; margin-bottom: 16px; color: var(--urgent); }
+.transcript { font-size: 15px; color: var(--ink-soft); border-left: 3px solid var(--rule); padding-left: 12px; margin: 16px 0; }
+
+.empty { text-align: center; padding: 44px 20px; color: var(--ink-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

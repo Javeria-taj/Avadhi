@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Assembly Guide — Claim Window Navigator</title>
+<style>
+:root{
+  --ink:#14181c; --soft:#575e66; --paper:#f2f1ec; --card:#fff; --rule:#d6d3c9;
+  --green:#1b5e3f; --amber:#b06a00; --red:#b3341e;
+  --mono:ui-monospace,'SF Mono','Cascadia Mono',Menlo,monospace;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+     font-size:16px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:40px 20px 100px}
+
+h1{font-size:34px;line-height:1.15;margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--soft);margin:0 0 32px}
+h2{font-size:13px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;
+   color:var(--soft);margin:48px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+h3{font-size:19px;margin:26px 0 8px}
+
+code{font-family:var(--mono);font-size:.88em;background:#e7e5de;padding:2px 5px}
+pre{background:var(--ink);color:#e8e6df;padding:16px;overflow-x:auto;
+    font-family:var(--mono);font-size:13px;line-height:1.5}
+pre code{background:none;padding:0;color:inherit}
+
+.step{background:var(--card);border:2px solid var(--rule);border-left:12px solid var(--ink);
+      padding:20px;margin-bottom:18px}
+.step-n{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+        color:var(--soft)}
+.step h3{margin-top:4px}
+
+.brick{background:var(--card);border:2px solid var(--rule);padding:16px 18px;margin-bottom:12px}
+.brick .path{font-family:var(--mono);font-size:13px;font-weight:700}
+.brick .who{float:right;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+            text-transform:uppercase;color:var(--soft)}
+.brick p{margin:8px 0 0;font-size:15px}
+
+.flag{border:2px solid var(--amber);background:#fff8ec;padding:14px 16px;margin:16px 0}
+.flag.stop{border-color:var(--red);background:#fdf0ee}
+.flag.ok{border-color:var(--green);background:#eef5f1}
+.flag strong{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+             text-transform:uppercase;margin-bottom:6px}
+
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+
+.flow{font-family:var(--mono);font-size:13px;line-height:1.9;background:var(--card);
+      border:2px solid var(--rule);padding:20px;overflow-x:auto}
+.flow .no-model{color:var(--green);font-weight:700}
+.flow .model{color:var(--amber)}
+
+ul{padding-left:22px}
+li{margin:5px 0}
+a{color:var(--green)}
+@media(max-width:600px){h1{font-size:26px}.brick .who{float:none;display:block;margin-bottom:4px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Claim Window Navigator</h1>
+<p class="sub">Assembly guide. Every brick, what it does, and the order to click them together.</p>
+
+<div class="flag ok">
+<strong>What this thing does</strong>
+Someone speaks, in Kannada, about a loss that just happened. The system works out which
+insurance claim clocks are now running, how long is left on each, and what to do right now —
+then generates the document they carry to the bank. It runs with the network off.
+</div>
+
+<h2>The one idea to hold onto</h2>
+
+<div class="flow">
+  speech
+  &nbsp;&nbsp;↓
+  <span class="model">[1] ASR — audio → text</span>
+  &nbsp;&nbsp;↓
+  <span class="model">[2] Gemma — text → structured facts</span>
+  &nbsp;&nbsp;↓
+  <span class="no-model">[3] RULES ENGINE — facts → deadlines &nbsp;&nbsp;← no model, no network</span>
+  &nbsp;&nbsp;↓
+  <span class="model">[4] Gemma — explain the result in Kannada</span>
+  &nbsp;&nbsp;↓
+  <span class="no-model">[5] PDF generation</span>
+</div>
+
+<p>Stage 3 is the whole argument. The model reports what it heard and explains what
+was decided — it never decides. Arithmetic on someone's insurance deadline is done by code
+that returns the same answer every time and cites its source. Say this to the judges in
+roughly those words.</p>
+
+<h2>The scaffold</h2>
+
+<pre><code>neonexus/
+├── Makefile                     make test / mock / api / ui / check
+├── pyproject.toml               pytest config — so tests run from anywhere
+├── requirements.txt
+├── .env.example                 → copy to .env
+│
+├── api/
+│   ├── main.py                  app, /health, error handler
+│   ├── config.py                env validated at boot
+│   ├── models/schemas.py        ★ THE CONTRACT — freeze at T+4
+│   ├── rules/
+│   │   ├── engine.py            ★ deterministic. no model, no network
+│   │   └── loader.py            rule loading + relative-date resolution
+│   ├── routes/
+│   │   ├── intake.py            POST /api/intake
+│   │   └── document.py          POST /api/document
+│   └── services/
+│       ├── asr.py               audio → text
+│       ├── extract.py           text → facts (Gemma)
+│       ├── explain.py           result → Kannada prose (Gemma, template fallback)
+│       └── document.py          facts → PDF
+│
+├── data/
+│   ├── schemes/                 ★ THE CONTENT — 3 rules, each with a citation
+│   │   ├── pmfby_localised.json     72h  ← demo centrepiece
+│   │   ├── pmsby_accident.json      30d
+│   │   └── pmjjby_death.json        30d
+│   └── forms/                   optional blank official PDFs
+│
+├── tests/test_engine.py         17 tests. green before you wire anything
+│
+├── ui/
+│   ├── next.config.mjs          proxies /api/* to FastAPI — same origin
+│   ├── certs/README.md          ★ TLS for the microphone. READ FIRST
+│   ├── .env.example             → copy to .env.local
+│   ├── app/
+│   │   ├── layout.jsx  page.jsx  globals.css
+│   └── components/
+│           ├── Countdown.jsx    the signature element
+│           ├── Recorder.jsx     tap to start, tap to stop
+│           └── ClaimCard.jsx    one card per triggered scheme
+│
+└── docs/
+    ├── ASSEMBLY-GUIDE.html      ← you are here
+    ├── 00-execution-plan.md     the 36-hour timeline
+    ├── 01-setup-runbook.md      environment prep
+    ├── 02-claim-rules-knowledge-base.md   domain research + source conflicts
+    ├── 03-architecture-and-contract.md    the frozen interface
+    └── 04-demo-qa-writeup.md    script, judge Q&amp;A, Kaggle skeleton</code></pre>
+
+<div class="flag"><strong>Three files carry the project</strong>
+<code>api/rules/engine.py</code> is the correctness. <code>data/schemes/*.json</code> is the
+substance. <code>ui/certs/README.md</code> is the thing that will silently break your demo if
+you skip it.</div>
+
+<h2>The bricks</h2>
+
+<h3>Backend — the engine</h3>
+
+<div class="brick">
+  <span class="who">A · build first</span>
+  <div class="path">api/models/schemas.py</div>
+  <p>Every data shape in the system. This file <em>is</em> the interface contract —
+  freeze it at T+4 and stop changing it. <code>EventReport</code> is what the model
+  extracted; <code>ClaimWindow</code> is what the engine decided. Note what's absent from
+  EventReport: no deadline, no verdict.</p>
+</div>
+
+<div class="brick">
+  <span class="who">A · the critical one</span>
+  <div class="path">api/rules/engine.py</div>
+  <p>Pure function. Takes an event and the rules, returns claim windows. No model, no
+  network, no clock reads inside the loop. Handles the three things that break silently:
+  IST timezone, unknown-versus-false, and expired claims that must still be shown.</p>
+</div>
+
+<div class="brick">
+  <span class="who">A</span>
+  <div class="path">api/rules/loader.py</div>
+  <p>Reads the rule JSON, and crashes at startup if any rule lacks a <code>source_url</code>.
+  Also holds <code>resolve_relative_datetime()</code> — "last night" becomes a timestamp
+  <em>here</em>, in plain code, with a confidence score. The model is explicitly forbidden
+  from doing date maths.</p>
+</div>
+
+<div class="brick">
+  <span class="who">A · owns the content</span>
+  <div class="path">data/schemes/*.json</div>
+  <p>Three rules: PMFBY 72-hour localised calamity, PMSBY 30-day accident, PMJJBY 30-day
+  death. <strong>Adding a scheme is a JSON file, not a code change</strong> — that sentence
+  is worth real points. Each file carries its citation and a verification note.</p>
+</div>
+
+<div class="brick">
+  <span class="who">A</span>
+  <div class="path">api/services/asr.py · extract.py · explain.py · document.py</div>
+  <p>The four model-touching pieces, one job each: audio→text, text→facts, result→Kannada
+  prose, facts→PDF. <code>explain.py</code> falls back to hand-written templates if
+  generation fails, so the countdown always speaks even if the model stalls mid-demo.</p>
+</div>
+
+<div class="brick">
+  <span class="who">A</span>
+  <div class="path">api/routes/ · api/main.py · api/config.py</div>
+  <p>HTTP plumbing only — parse, call service, return. <code>main.py</code> has
+  <code>/health</code> (hit it before you walk on stage) and a handler that stops stack
+  traces reaching the screen. <code>config.py</code> validates env at boot and crashes
+  immediately if the model path is wrong, rather than at hour 20.</p>
+</div>
+
+<div class="brick">
+  <span class="who">A · run before wiring anything</span>
+  <div class="path">tests/test_engine.py</div>
+  <p>17 tests over boundaries, timezone, unknown-vs-false, and the compounding
+  PMSBY+PMJJBY case. This is the only part of the system where a silent bug costs someone
+  real money. <code>pytest -q</code>. All green before you touch the UI.</p>
+</div>
+
+<h3>Frontend — the face</h3>
+
+<div class="brick">
+  <span class="who">B · start here at T+0</span>
+  <div class="path">ui/lib/mocks.js + ui/lib/api.js</div>
+  <p>The reason two people can ship this. <code>mocks.js</code> mirrors the backend
+  contract exactly; set <code>NEXT_PUBLIC_USE_MOCKS=true</code> and build the entire interface
+  before the backend exists. Also your emergency demo fallback if inference dies.</p>
+</div>
+
+<div class="brick">
+  <span class="who">B</span>
+  <div class="path">ui/components/Countdown.jsx</div>
+  <p>The signature element. Ticks every second so the pressure is felt rather than read,
+  and reports hours — 48 sounds urgent, "2 days" doesn't. Border colour is driven by
+  status, nothing else.</p>
+</div>
+
+<div class="brick">
+  <span class="who">B</span>
+  <div class="path">ui/components/Recorder.jsx</div>
+  <p>Tap to start, tap to stop — not press-and-hold, because the user has one wet hand.
+  When the mic fails it names the actual cause (non-HTTPS origin) instead of apologising.</p>
+</div>
+
+<div class="brick">
+  <span class="who">B</span>
+  <div class="path">ui/components/ClaimCard.jsx</div>
+  <p>One card per triggered scheme: status badge, Kannada explanation, numbered evidence
+  checklist, reporting channels, document button — and the rule's source citation printed
+  at the bottom, visible. When a judge asks how you know the rule is right, it's already
+  on screen.</p>
+</div>
+
+<div class="brick">
+  <span class="who">B</span>
+  <div class="path">ui/app/globals.css</div>
+  <p>No web fonts (offline = blank screen), high contrast (phone in daylight), colour
+  carries status and never decoration. Design reasoning is in the comment block at the top
+  so it survives a tired 3am edit.</p>
+</div>
+
+<div class="brick">
+  <span class="who">both · do this tonight</span>
+  <div class="path">ui/next.config.mjs · ui/certs/</div>
+  <p><code>next.config.mjs</code> rewrites <code>/api/*</code> to FastAPI so the browser only
+  ever talks to one origin — no CORS, and no mixed-content failure when the page is HTTPS.
+  <code>certs/README.md</code> is the microphone setup. Read it before anything else.</p>
+</div>
+
+<h2>Build order</h2>
+
+<div class="step">
+  <div class="step-n">Step 1 · 10 min · do this before anything else</div>
+  <h3>Make the microphone work</h3>
+  <p><code>getUserMedia</code> is blocked on non-secure origins. The phone opening
+  <code>http://192.168.x.x:5173</code> gets <strong>no microphone and no error message</strong>.
+  This has killed more hackathon demos than bad models.</p>
+<pre><code>brew install mkcert nss
+mkcert -install
+ipconfig getifaddr en0          # note your LAN IP
+cd ui && mkcert &lt;that-ip&gt; localhost 127.0.0.1
+mv &lt;that-ip&gt;+2-key.pem ui/certs/key.pem
+mv &lt;that-ip&gt;+2.pem     ui/certs/cert.pem</code></pre>
+  <div class="flag stop"><strong>Verify now, not tomorrow</strong>
+  Open the HTTPS URL on the S24 and confirm the mic permission prompt appears.
+  Use the phone's own hotspot — venue Wi-Fi will not work.</div>
+</div>
+
+<div class="step">
+  <div class="step-n">Step 2 · 5 min</div>
+  <h3>Prove the engine works with no model at all</h3>
+<pre><code>python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pytest -q                                    # expect 17 passed
+
+MOCK_MODE=true uvicorn api.main:app --host 0.0.0.0 --port 8000
+curl localhost:8000/health</code></pre>
+  <div class="flag ok"><strong>Why this matters</strong>
+  You now have a working end-to-end product with zero inference. Everything after this
+  is upgrading a system that already runs, not building one that doesn't.</div>
+</div>
+
+<div class="step">
+  <div class="step-n">Step 3 · 10 min · B works in parallel from here</div>
+  <h3>Bring up the interface</h3>
+<pre><code>cd ui && npm install
+NEXT_PUBLIC_USE_MOCKS=true npm run dev:https</code></pre>
+  <p>Open the HTTPS URL on the phone. Full interface, mock data, no backend needed.
+  B can now build for hours without ever blocking on A.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">Step 4 · 20 min · use Edge Gallery, not Termux</div>
+  <h3>Measure the phone, and settle the Kannada question</h3>
+  <p>Sideload <strong>Google AI Edge Gallery</strong> (Apache 2.0, from the
+  <code>google-ai-edge/gallery</code> GitHub releases). It officially supports Gemma 4 and
+  ships a built-in benchmark — ten minutes instead of an hour compiling llama.cpp.</p>
+  <ul>
+    <li><strong>Model Management &amp; Benchmark</strong> → screenshot the tok/s and memory.
+    That screenshot is your measurements slide.</li>
+    <li><strong>Audio Scribe</strong> → speak the Kannada demo line. Clean transcription means
+    <code>ASR_BACKEND=gemma</code>; mushy means <code>whisper</code>. Your T+4 gate, answered
+    before the clock starts.</li>
+  </ul>
+  <div class="flag stop"><strong>It is not your backend</strong>
+  Edge Gallery is a sandbox with no local API server — your FastAPI app cannot call into it.
+  The real in-app path is LiteRT-LM (MediaPipe's mobile LLM inference is now deprecated), but
+  that means a native Kotlin app, and neither of you is a mobile dev with 36 hours left.
+  Don't take that trade.</div>
+  <p><strong>So: Path B (kiosk).</strong> Model on the M4 under MLX, phone as browser client
+  over the phone's own hotspot. Fully offline. The Edge Gallery benchmark is what substantiates
+  the on-device claim — label it honestly as a benchmark, not as your app.</p>
+</div>
+
+<div class="step">
+  <div class="step-n">Step 5 · switch on the real thing</div>
+  <h3>Turn off mock mode</h3>
+<pre><code>cp .env.example .env        # set MODEL_PATH, MOCK_MODE=false
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+# and on the UI side, set NEXT_PUBLIC_USE_MOCKS=false
+npm run dev</code></pre>
+  <p>If extraction is poor, the fix is <code>SYSTEM_PROMPT</code> in
+  <code>api/services/extract.py</code> — not the engine. If Kannada ASR is weak, that's
+  the <code>ASR_BACKEND</code> switch, decided by T+4.</p>
+</div>
+
+<h2>Who owns what</h2>
+
+<table>
+<tr><th>Window</th><th>A — backend</th><th>B — frontend</th></tr>
+<tr><td>T+0–2</td><td>Steps 1–2. Tests green, mock API up</td><td>Step 3. Recorder + countdown on mocks</td></tr>
+<tr><td>T+2–4</td><td>ASR wired — gate already answered in Step 4</td><td>Claim cards, checklist</td></tr>
+<tr><td>T+4</td><td colspan="2"><strong>Contract freeze. 15-min sync. No field changes after this.</strong></td></tr>
+<tr><td>T+4–10</td><td>Extraction prompt until it reliably fills EventReport</td><td>Polish, then <strong>start Kaggle write-up + diagram</strong></td></tr>
+<tr><td>T+10–14</td><td>Explanation + PDF on real data</td><td>Slides. Create + verify the Kaggle account</td></tr>
+<tr><td>T+14–15</td><td colspan="2">Mutual walkthrough — each demos their half</td></tr>
+<tr><td>T+15–20</td><td colspan="2"><strong>Both sleep. Same window.</strong></td></tr>
+<tr><td>T+20–24</td><td>Real inference end to end</td><td>Kill the mocks, wire the live API</td></tr>
+<tr><td>T+24</td><td colspan="2"><strong>Checkpoint: full run must work. If not, cut PDF generation.</strong></td></tr>
+<tr><td>T+28</td><td colspan="2"><strong>Code freeze. No exceptions.</strong></td></tr>
+<tr><td>T+28–34</td><td>Walkthrough video</td><td>Write-up + slides submitted</td></tr>
+<tr><td>T+32–34</td><td colspan="2">Rehearse 15×. Record the backup video.</td></tr>
+</table>
+
+<h2>When it breaks</h2>
+
+<table>
+<tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+<tr><td>No mic on the phone, no error</td><td>Non-HTTPS origin</td><td>Step 1. Always this.</td></tr>
+<tr><td>Deadline off by 5½ hours</td><td>Naive datetime treated as UTC</td><td>Everything through <code>_as_ist()</code></td></tr>
+<tr><td>Model returns prose not JSON</td><td>Prompt drift</td><td><code>_strip_fences()</code> already handles fences; tighten SYSTEM_PROMPT</td></tr>
+<tr><td>Server won't boot</td><td>MODEL_PATH wrong</td><td>Deliberate — config crashes at boot, not at hour 20</td></tr>
+<tr><td>Rule loader throws</td><td>A rule has no <code>source_url</code></td><td>Also deliberate. Add the citation.</td></tr>
+<tr><td>Inference dies before the demo</td><td>—</td><td><code>MOCK_MODE=true</code>. Full product, no model. Say so honestly if asked.</td></tr>
+</table>
+
+<h2>Before you walk on stage</h2>
+<ul>
+<li><code>/health</code> returns ok on the actual demo device</li>
+<li>Airplane mode on, complete run succeeds</li>
+<li>Backup video recorded and playable <strong>offline</strong></li>
+<li>HDMI adapter tested against the real projector</li>
+<li>PMFBY helpline number verified on pmfby.gov.in — sources disagree, and it's the one
+number your product tells people to call</li>
+<li>Repo public (needed for the Kaggle embed), commits inside the event window</li>
+<li>Both of you have said the stage-3 line out loud at least five times</li>
+</ul>
+
+</div>
+</body>
+</html>
