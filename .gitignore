@@ -1,6 +1,6 @@
 .venv/
 node_modules/
-/models/
+models/
 *.pem
 certs/*.pem
 .env
@@ -9,3 +9,6 @@ __pycache__/
 *.pyc
 .next/
 dist/
+data/cases.json
+data/cases.corrupt.json
+data/photos/

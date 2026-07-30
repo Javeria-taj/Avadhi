@@ -18,7 +18,7 @@ by a model, and every rule carries a source citation.
 
 ```bash
 make install
-make test      # 17 tests on the rules engine
+make test      # 76 tests: engine, working-day arithmetic, persistence, i18n
 make mock      # API with MOCK_MODE=true — full pipeline, zero inference
 
 # separate terminal
@@ -35,7 +35,9 @@ Then `make check` before you demo.
 ## Layout
 
 ```
-api/rules/engine.py       ★ deterministic. no model, no network. 17 tests.
+api/rules/engine.py       ★ deterministic. no model, no network.
+api/rules/workdays.py     ★ RBI working-day arithmetic. 23 tests.
+api/services/cases.py     ★ persistence + state machine — why this isn't a chatbot
 api/models/schemas.py     ★ the interface contract. freeze at T+4.
 data/schemes/*.json       ★ the domain content. adding a scheme is a data change.
 ui/certs/README.md        ★ the HTTPS/microphone setup. read it first.
@@ -49,7 +51,8 @@ docs/                     assembly guide + 5 planning documents
 
 ## Rules
 
-PMFBY (72h localised calamity), PMSBY (30d accident), PMJJBY (30d death). The loader
+PMFBY (72h localised calamity), RBI unauthorised transaction (3 working days), PMSBY
+(30d accident), PMJJBY (30d death). The loader
 refuses to start if any rule lacks `source_url` and `verified_on`.
 
 Two conflicts between official sources are documented in the rule files rather than papered
@@ -66,3 +69,6 @@ three sources; verify on pmfby.gov.in before the demo.**
 | `docs/02-claim-rules-knowledge-base.md` | Domain research, source conflicts |
 | `docs/03-architecture-and-contract.md` | The frozen interface |
 | `docs/04-demo-qa-writeup.md` | Demo script, judge Q&A, Kaggle skeleton |
+| `docs/05-LOCKED-SPEC.md` | Frozen feature set, screens, work split |
+| `docs/07-bring-up-runbook.md` | Step-by-step bring-up and verification |
+| `docs/08-deployment-two-paths.md` | Mac kiosk vs true on-device on the S24 |

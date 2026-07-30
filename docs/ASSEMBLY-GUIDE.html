@@ -108,24 +108,35 @@ roughly those words.</p>
 │   ├── models/schemas.py        ★ THE CONTRACT — freeze at T+4
 │   ├── rules/
 │   │   ├── engine.py            ★ deterministic. no model, no network
+│   │   ├── workdays.py          ★ RBI working-day arithmetic. 23 tests
 │   │   └── loader.py            rule loading + relative-date resolution
 │   ├── routes/
-│   │   ├── intake.py            POST /api/intake
+│   │   ├── intake.py            POST /api/intake  (also creates the Case)
+│   │   ├── cases.py             GET/PATCH/POST /api/cases/*
 │   │   └── document.py          POST /api/document
 │   └── services/
 │       ├── asr.py               audio → text
 │       ├── extract.py           text → facts (Gemma)
 │       ├── explain.py           result → Kannada prose (Gemma, template fallback)
-│       └── document.py          facts → PDF
+│       ├── document.py          facts → PDF
+│       └── cases.py             ★ persistence + state machine
 │
 ├── data/
 │   ├── schemes/                 ★ THE CONTENT — 3 rules, each with a citation
 │   │   ├── pmfby_localised.json     72h  ← demo centrepiece
+│   │   ├── rbi_unauth_txn.json      3 working days  ← second vertical
 │   │   ├── pmsby_accident.json      30d
 │   │   └── pmjjby_death.json        30d
-│   └── forms/                   optional blank official PDFs
+│   ├── forms/                   optional blank official PDFs
+│   ├── holidays.json            bank holidays — VERIFY before field use
+│   ├── cases.json               created at runtime (gitignored)
+│   └── photos/                  created at runtime (gitignored)
 │
-├── tests/test_engine.py         17 tests. green before you wire anything
+├── tests/
+│   ├── conftest.py              sets MOCK_MODE before any api import
+│   ├── test_engine.py           rules engine
+│   ├── test_workdays.py         ★ working-day arithmetic
+│   └── test_cases.py            persistence + endpoints        67 total
 │
 ├── ui/
 │   ├── next.config.mjs          proxies /api/* to FastAPI — same origin
@@ -211,7 +222,7 @@ you skip it.</div>
   <div class="path">tests/test_engine.py</div>
   <p>17 tests over boundaries, timezone, unknown-vs-false, and the compounding
   PMSBY+PMJJBY case. This is the only part of the system where a silent bug costs someone
-  real money. <code>pytest -q</code>. All green before you touch the UI.</p>
+  real money. <code>pytest</code> — 67 tests across the engine, working-day arithmetic and case persistence. All green before you touch the UI.</p>
 </div>
 
 <h3>Frontend — the face</h3>
@@ -288,7 +299,7 @@ mv &lt;that-ip&gt;+2.pem     ui/certs/cert.pem</code></pre>
   <h3>Prove the engine works with no model at all</h3>
 <pre><code>python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pytest -q                                    # expect 17 passed
+pytest                                       # expect 67 passed
 
 MOCK_MODE=true uvicorn api.main:app --host 0.0.0.0 --port 8000
 curl localhost:8000/health</code></pre>
