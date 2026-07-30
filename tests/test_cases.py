@@ -164,9 +164,13 @@ def test_a_reported_case_does_not_revert_to_expired():
 
 def test_recompute_refreshes_hours_remaining():
     case = make_hail_case()
-    raw = json.loads((settings.data_dir / "cases.json").read_text())
+    # encoding is mandatory: the file contains Kannada, and Windows defaults
+    # read_text/write_text to cp1252, which cannot decode it.
+    raw = json.loads((settings.data_dir / "cases.json").read_text(encoding="utf-8"))
     raw[case.case_id]["claim"]["hours_remaining"] = 999.0
-    (settings.data_dir / "cases.json").write_text(json.dumps(raw, default=str))
+    (settings.data_dir / "cases.json").write_text(
+        json.dumps(raw, default=str), encoding="utf-8"
+    )
 
     assert store.recompute(store.get_case(case.case_id)).claim.hours_remaining < 100
 

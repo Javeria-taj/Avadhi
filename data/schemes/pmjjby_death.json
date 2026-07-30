@@ -49,5 +49,27 @@
     "Nominee's KYC documents",
     "Copy of the first two pages of the passbook"
   ],
-  "failure_consequence_en": "The nominee must file the claim within 30 days."
+  "failure_consequence_en": "The nominee must file the claim within 30 days.",
+  "required_documents_en": [
+    "Claim-cum-discharge form from the bank",
+    "Death certificate issued by the registrar",
+    "Nominee's KYC documents",
+    "Passbook - first two pages photocopy",
+    "Legal heir or succession certificate, if no nominee was recorded"
+  ],
+  "required_documents_kn": [
+    "ಬ್ಯಾಂಕಿನಿಂದ ಕ್ಲೇಮ್-ಕಮ್-ಡಿಸ್ಚಾರ್ಜ್ ಫಾರ್ಮ್",
+    "ರಿಜಿಸ್ಟ್ರಾರ್ ನೀಡಿದ ಮರಣ ಪ್ರಮಾಣಪತ್ರ",
+    "ನಾಮಿನಿಯ ಕೆವೈಸಿ ದಾಖಲೆಗಳು",
+    "ಪಾಸ್‌ಬುಕ್ ಮೊದಲ ಎರಡು ಪುಟಗಳ ಪ್ರತಿ",
+    "ನಾಮಿನಿ ಇಲ್ಲದಿದ್ದರೆ ವಾರಸುದಾರ ಪ್ರಮಾಣಪತ್ರ"
+  ],
+  "window_description_en": "30 days from the death",
+  "window_description_kn": "ಮರಣದ 30 ದಿನಗಳೊಳಗೆ",
+  "channels_kn": [
+    "ಪ್ರೀಮಿಯಂ ಕಡಿತವಾದ ಬ್ಯಾಂಕ್ ಅಥವಾ ಅಂಚೆ ಕಚೇರಿ"
+  ],
+  "channels_en": [
+    "The bank or post office where the premium was debited"
+  ]
 }

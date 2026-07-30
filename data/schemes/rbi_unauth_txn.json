@@ -53,5 +53,37 @@
     "Report at cybercrime.gov.in or call 1930",
     "Get an account statement covering the transaction"
   ],
-  "failure_consequence_en": "Report within 3 working days and your liability is zero. Report later and you bear part of the loss yourself."
+  "failure_consequence_en": "Report within 3 working days and your liability is zero. Report later and you bear part of the loss yourself.",
+  "required_documents_en": [
+    "Written complaint letter, signed - ask the branch for their dispute form",
+    "Printout or screenshot of the bank's SMS or email alert",
+    "Account statement covering the disputed transaction",
+    "ID proof photocopy",
+    "Card number and last four digits - do NOT attach a photo of the card",
+    "Cyber crime acknowledgement from cybercrime.gov.in or helpline 1930"
+  ],
+  "required_documents_kn": [
+    "ಸಹಿ ಮಾಡಿದ ಲಿಖಿತ ದೂರು - ಶಾಖೆಯಿಂದ ಫಾರ್ಮ್ ಪಡೆಯಿರಿ",
+    "ಬ್ಯಾಂಕಿನ ಎಸ್‌ಎಂಎಸ್ ಅಥವಾ ಇಮೇಲ್ ಅಲರ್ಟ್‌ನ ಪ್ರತಿ",
+    "ವಹಿವಾಟು ಇರುವ ಖಾತೆ ವಿವರಣಾ ಪಟ್ಟಿ",
+    "ಗುರುತಿನ ಚೀಟಿ ಪ್ರತಿ",
+    "ಕಾರ್ಡ್ ಸಂಖ್ಯೆಯ ಕೊನೆಯ ನಾಲ್ಕು ಅಂಕಿ - ಕಾರ್ಡ್ ಫೋಟೋ ಲಗತ್ತಿಸಬೇಡಿ",
+    "cybercrime.gov.in ಅಥವಾ 1930 ದೂರಿನ ಸ್ವೀಕೃತಿ"
+  ],
+  "window_description_en": "3 working days from the bank's alert",
+  "window_description_kn": "ಬ್ಯಾಂಕ್ ಸಂದೇಶದಿಂದ 3 ಕೆಲಸದ ದಿನಗಳೊಳಗೆ",
+  "channels_kn": [
+    "ಬ್ಯಾಂಕಿನ 24x7 ಸಹಾಯವಾಣಿ - ಕಾರ್ಡ್ ಹಿಂಬದಿಯ ಸಂಖ್ಯೆ",
+    "ಬ್ಯಾಂಕ್ ಆ್ಯಪ್ ಅಥವಾ ನೆಟ್ ಬ್ಯಾಂಕಿಂಗ್",
+    "ನಿಮ್ಮ ಶಾಖೆಗೆ ಲಿಖಿತ ದೂರು - ಸ್ಟ್ಯಾಂಪ್ ಹಾಕಿಸಿ ಪ್ರತಿ ಪಡೆಯಿರಿ",
+    "cybercrime.gov.in",
+    "ಸೈಬರ್ ಕ್ರೈಂ ಸಹಾಯವಾಣಿ 1930"
+  ],
+  "channels_en": [
+    "Your bank's 24x7 helpline - number on the back of your card",
+    "Bank mobile app or net banking - report unauthorised transaction",
+    "Your home branch, in writing, and take a stamped acknowledgement",
+    "National Cyber Crime Reporting Portal - cybercrime.gov.in",
+    "Cyber crime helpline 1930"
+  ]
 }

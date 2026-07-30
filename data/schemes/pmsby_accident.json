@@ -51,5 +51,31 @@
     "Nominee's Aadhaar and bank details",
     "Copy of the first two pages of the passbook"
   ],
-  "failure_consequence_en": "If not submitted to the bank within 30 days the claim may be delayed or rejected."
+  "failure_consequence_en": "If not submitted to the bank within 30 days the claim may be delayed or rejected.",
+  "required_documents_en": [
+    "Claim-cum-discharge form from the bank",
+    "Death certificate, or disability certificate from a civil surgeon",
+    "FIR copy - mandatory for accident cases",
+    "Post-mortem report, for accidental death",
+    "Nominee's Aadhaar and bank account details",
+    "Passbook - first two pages photocopy"
+  ],
+  "required_documents_kn": [
+    "ಬ್ಯಾಂಕಿನಿಂದ ಕ್ಲೇಮ್-ಕಮ್-ಡಿಸ್ಚಾರ್ಜ್ ಫಾರ್ಮ್",
+    "ಮರಣ ಪ್ರಮಾಣಪತ್ರ ಅಥವಾ ಅಂಗವೈಕಲ್ಯ ಪ್ರಮಾಣಪತ್ರ",
+    "ಎಫ್‌ಐಆರ್ ಪ್ರತಿ - ಅಪಘಾತಕ್ಕೆ ಕಡ್ಡಾಯ",
+    "ಮರಣೋತ್ತರ ಪರೀಕ್ಷಾ ವರದಿ - ಅಪಘಾತ ಮರಣಕ್ಕೆ",
+    "ನಾಮಿನಿಯ ಆಧಾರ್ ಮತ್ತು ಬ್ಯಾಂಕ್ ವಿವರ",
+    "ಪಾಸ್‌ಬುಕ್ ಮೊದಲ ಎರಡು ಪುಟಗಳ ಪ್ರತಿ"
+  ],
+  "window_description_en": "30 days from the accident",
+  "window_description_kn": "ಅಪಘಾತದ 30 ದಿನಗಳೊಳಗೆ",
+  "channels_kn": [
+    "ಪ್ರೀಮಿಯಂ ಕಡಿತವಾದ ಬ್ಯಾಂಕ್ ಶಾಖೆ",
+    "ವಿಮಾ ಕಂಪನಿ ಕಚೇರಿ"
+  ],
+  "channels_en": [
+    "The bank branch where the PMSBY premium was auto-debited",
+    "Insurance company designated office"
+  ]
 }
