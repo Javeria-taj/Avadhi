@@ -2,105 +2,18 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+import { listCases, submitAudio, setStepDone, uploadPhoto, fetchDocument } from '@/lib/api'
+import { adaptCases, adaptCase, adaptIntake } from '@/lib/adapt'
+
 const H = 3600e3 // 1 hour in ms
 
-function initialCases(t0) {
-  const pmSteps = () => [
-    { kn: 'ಹೊಲದ ಪೂರ್ಣ ನೋಟ — ದೂರದಿಂದ ಫೋಟೋ', en: 'Wide shot of the field', photo: true, done: false, shot: null },
-    { kn: 'ಹಾನಿಯಾದ ಬೆಳೆಯ ಹತ್ತಿರದ ಫೋಟೋ', en: 'Close-up of damaged crop', photo: true, done: false, shot: null },
-    { kn: 'ಪಾಲಿಸಿ / ಪ್ರೀಮಿಯಂ ರಸೀದಿಯ ಫೋಟೋ', en: 'Policy or premium receipt', photo: true, done: false, shot: null },
-    { kn: 'ಹೆಲ್ಪ್‌ಲೈನ್ 14447 ಗೆ ಕರೆ ಮಾಡಿ', en: 'Call Krishi Rakshak 14447', photo: false, done: false, shot: null },
-    { kn: 'ಕೃಷಿ ಅಧಿಕಾರಿಗೆ ತಿಳಿಸಿ', en: 'Inform the agriculture officer', photo: false, done: false, shot: null },
-  ]
+const STAMP_MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
-  const pmCh = () => [
-    { kn: 'ಕೃಷಿ ರಕ್ಷಕ ಹೆಲ್ಪ್‌ಲೈನ್', en: 'Krishi Rakshak helpline', v: '14447' },
-    { kn: 'ವಿಮಾ ಕಂಪನಿ ಶಾಖೆ', en: 'Insurer branch', v: '—' },
-    { kn: 'ಕೃಷಿ ಇಲಾಖೆ ಕಚೇರಿ', en: 'Agriculture office', v: '—' },
-  ]
-
-  const pmExpl = 'ಆಲಿಕಲ್ಲು ಮಳೆಯಿಂದ ಆದ ಬೆಳೆ ನಷ್ಟವನ್ನು 72 ಗಂಟೆಗಳ ಒಳಗೆ ವಿಮಾ ಕಂಪನಿಗೆ ತಿಳಿಸಬೇಕು. ತಡವಾದರೆ, ಪಾಲಿಸಿ ಇದ್ದರೂ ಕ್ಲೈಮ್ ತಿರಸ್ಕೃತವಾಗಬಹುದು. ಈ ಗಡುವು ಸರ್ಕಾರಿ ನಿಯಮ — ಅಂದಾಜು ಅಲ್ಲ.'
-  const pmExplEn = 'Crop loss from hailstorm must be reported to the insurance company within 72 hours. If late, the claim can be rejected even with a valid policy. This deadline is a government rule — not an estimate.'
-
-  const pm2 = pmSteps()
-  pm2[0].done = true
-  pm2[0].shot = { at: '07:42', coords: '15.1502N 76.9328E' }
-
-  return [
-    {
-      id: 'AVD-0152',
-      rule: 'RBI 2017',
-      schemeKn: 'ಅನಧಿಕೃತ ಬ್ಯಾಂಕ್ ವಹಿವಾಟು',
-      schemeEn: 'Unauthorised bank transaction',
-      metaKn: '₹18,400 · ಖಾತೆ ····4127',
-      metaEn: '₹18,400 · A/C ····4127',
-      eventDate: '28 JUL 2026 · SMS 11:05',
-      eventDateEn: '28 JUL 2026 · SMS 11:05',
-      windowH: 72,
-      windowLabel: '3 ಕೆಲಸದ ದಿನ',
-      windowLabelEn: '3 working days',
-      deadline: t0 + 9 * H + 13 * 60e3 + 42e3,
-      explKn: 'ನಿಮ್ಮ ಅನುಮತಿ ಇಲ್ಲದೆ ಖಾತೆಯಿಂದ ಹಣ ಹೋಗಿದ್ದರೆ, ಬ್ಯಾಂಕ್ ಸಂದೇಶ ಬಂದ 3 ಕೆಲಸದ ದಿನಗಳ ಒಳಗೆ ವರದಿ ಮಾಡಿದರೆ ನಿಮ್ಮ ಹೊಣೆ ಶೂನ್ಯ — ಪೂರ್ಣ ಹಣ ವಾಪಸ್ ಪಡೆಯುವ ಹಕ್ಕು ನಿಮ್ಮದು.',
-      explEn: 'If money left your account without your permission, reporting within 3 working days of the bank’s SMS means zero liability — you have the right to a full refund.',
-      steps: [
-        { kn: 'ಬ್ಯಾಂಕ್ SMS ಸಂದೇಶದ ಫೋಟೋ ತೆಗೆಯಿರಿ', en: 'Photograph the bank SMS', photo: true, done: false, shot: null },
-        { kn: 'ಪಾಸ್‌ಬುಕ್ / ಸ್ಟೇಟ್‌ಮೆಂಟ್ ನಮೂದಿನ ಫೋಟೋ', en: 'Photograph the passbook entry', photo: true, done: false, shot: null },
-        { kn: 'ಬ್ಯಾಂಕ್ ಶಾಖೆಗೆ ಲಿಖಿತ ದೂರು ನೀಡಿ', en: 'File written complaint at branch', photo: false, done: false, shot: null },
-        { kn: 'ದೂರು ಸ್ವೀಕೃತಿ ಸಂಖ್ಯೆ ಪಡೆದುಕೊಳ್ಳಿ', en: 'Collect acknowledgement number', photo: false, done: false, shot: null },
-      ],
-      channels: [
-        { kn: 'ಬ್ಯಾಂಕ್ ಶಾಖೆ — ಲಿಖಿತ ದೂರು', en: 'Bank branch · written complaint', v: '—' },
-        { kn: 'ಸೈಬರ್ ಸಹಾಯವಾಣಿ', en: 'Cyber fraud helpline', v: '1930' },
-        { kn: 'RBI ದೂರು ಪೋರ್ಟಲ್', en: 'RBI CMS portal', v: 'cms.rbi.org.in' },
-      ],
-      src: 'rbi.org.in — DBR.No.Leg.BC.78/09.07.005/2017-18',
-      verified: '2026-07-27',
-    },
-    {
-      id: 'AVD-0149',
-      rule: 'PMFBY §21(2)',
-      schemeKn: 'ಬೆಳೆ ವಿಮೆ — ಆಲಿಕಲ್ಲು ಹಾನಿ',
-      schemeEn: 'Crop insurance — hailstorm damage',
-      metaKn: 'ಹತ್ತಿ · ~2 ಎಕರೆ',
-      metaEn: 'Cotton · ~2 acres',
-      eventDate: '28 JUL 2026 · ~ರಾತ್ರಿ',
-      eventDateEn: '28 JUL 2026 · ~night',
-      windowH: 72,
-      windowLabel: '72 ಗಂಟೆ',
-      windowLabelEn: '72 hours',
-      deadline: t0 + 47 * H + 26 * 60e3 + 8e3,
-      explKn: pmExpl,
-      explEn: pmExplEn,
-      steps: pm2,
-      channels: pmCh(),
-      src: 'pmfby.gov.in — ಮಾರ್ಗಸೂಚಿ §21(2)',
-      verified: '2026-07-27',
-    },
-    {
-      id: 'AVD-0134',
-      rule: 'PMFBY §21(2)',
-      schemeKn: 'ಬೆಳೆ ವಿಮೆ — ಅತಿವೃಷ್ಟಿ ಹಾನಿ',
-      schemeEn: 'Crop insurance — excess rainfall',
-      metaKn: 'ಮೆಕ್ಕೆಜೋಳ · ~1 ಎಕರೆ',
-      metaEn: 'Maize · ~1 acre',
-      eventDate: '18 JUL 2026',
-      eventDateEn: '18 JUL 2026',
-      windowH: 72,
-      windowLabel: '72 ಗಂಟೆ',
-      windowLabelEn: '72 hours',
-      deadline: t0 - 6 * 24 * H,
-      explKn: pmExpl,
-      explEn: pmExplEn,
-      steps: pmSteps(),
-      channels: pmCh(),
-      src: 'pmfby.gov.in — ಮಾರ್ಗಸೂಚಿ §21(2)',
-      verified: '2026-07-10',
-    },
-  ]
-}
+/** "30 JUL 2026" - burned into the photo alongside the time. */
+const shortStamp = (d) =>
+  `${String(d.getDate()).padStart(2, '0')} ${STAMP_MONTHS[d.getMonth()]} ${d.getFullYear()}`
 
 export default function Home() {
-  const t0Ref = useRef(Date.now())
   const [lang, setLang] = useState('kn')
 
   useEffect(() => {
@@ -119,7 +32,10 @@ export default function Home() {
   }, [lang])
   const [screen, setScreen] = useState('first_run') // 'first_run' | 'confirm_doc' | 'home' | 'intake' | 'case' | 'capture' | 'doc'
   const [caseId, setCaseId] = useState(null)
-  const [now, setNow] = useState(Date.now())
+  // Starts at 0, not Date.now(): reading the clock during render makes the
+  // server and client markup differ, which is a hydration mismatch. The timer
+  // effect below sets the real value on mount.
+  const [now, setNow] = useState(0)
 
   // Onboarding & Completeness State
   const [completeness, setCompleteness] = useState(0) // 0 to 1
@@ -136,12 +52,26 @@ export default function Home() {
   // Intake states
   const [intake, setIntake] = useState('idle') // 'idle' | 'recording' | 'processing' | 'clarify'
   const [recSec, setRecSec] = useState(0)
+  // What the backend actually extracted, via adaptIntake(). Null until a clip
+  // has been transcribed.
+  const [intakeResult, setIntakeResult] = useState(null)
+  const [intakeError, setIntakeError] = useState(null)
+  const [stepError, setStepError] = useState(null)
+  const audioRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+  const audioStreamRef = useRef(null)
 
   // Capture states
   const [capCase, setCapCase] = useState(null)
   const [capIdx, setCapIdx] = useState(null)
   const [captured, setCaptured] = useState(false)
   const [capFrozen, setCapFrozen] = useState(null)
+  const [capPreview, setCapPreview] = useState(null) // object URL of the frame just taken
+  const [capUploading, setCapUploading] = useState(false)
+  const [capError, setCapError] = useState(null)
+  const canvasRef = useRef(null)
+  const capBlobRef = useRef(null)
+  const capTakenAtRef = useRef(null)
 
   // Scroll preservation for Evidence Checklist
   const s3SectionRef = useRef(null)
@@ -151,16 +81,30 @@ export default function Home() {
   // Document states
   const [docReady, setDocReady] = useState(true)
   const [shareFlash, setShareFlash] = useState(false)
+  const [docUrl, setDocUrl] = useState(null)
+  const [docLoading, setDocLoading] = useState(false)
+  const [docError, setDocError] = useState(null)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
 
-  // Dynamic Geolocation State
+  // Dynamic Geolocation State.
+  //
+  // lat/lon stay null until the device actually returns a fix. They are what
+  // gets uploaded, and stamped into the photo. Never substitute a placeholder
+  // here: a coordinate burned onto claim evidence has to be the real one or
+  // absent, and the backend marks a photo location_verified: false when it
+  // arrives without one.
   const [geoCoords, setGeoCoords] = useState({
-    str: '15.1502° N  76.9328° E  ±8m',
-    shortStr: '15.1502N 76.9328E',
+    str: '',
+    shortStr: '',
+    lat: null,
+    lon: null,
+    accuracy: null,
   })
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'geolocation' in navigator && screen === 'capture') {
+      // Asked at capture time, not on page load - permission prompts land when
+      // the person is trying to take the photo, which is when they make sense.
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const latVal = pos.coords.latitude
@@ -172,9 +116,10 @@ export default function Home() {
           const lngFormatted = Math.abs(lngVal).toFixed(4)
           const str = `${latFormatted}° ${latDir}  ${lngFormatted}° ${lngDir}  ±${accVal}m`
           const shortStr = `${latFormatted}${latDir} ${lngFormatted}${lngDir}`
-          setGeoCoords({ str, shortStr })
+          setGeoCoords({ str, shortStr, lat: latVal, lon: lngVal, accuracy: accVal })
         },
-        () => {},
+        // Denied or unavailable. The capture still goes ahead, unstamped.
+        () => setGeoCoords({ str: '', shortStr: '', lat: null, lon: null, accuracy: null }),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       )
     }
@@ -240,10 +185,32 @@ export default function Home() {
 
   // Cases list
   const [cases, setCases] = useState([])
+  const [casesLoading, setCasesLoading] = useState(true)
+  const [casesError, setCasesError] = useState(null)
+  // Bumped by the retry button to re-run the fetch below.
+  const [casesReload, setCasesReload] = useState(0)
 
   useEffect(() => {
-    setCases(initialCases(t0Ref.current))
-  }, [])
+    let alive = true
+    setCasesLoading(true)
+    setCasesError(null)
+    listCases()
+      .then((data) => {
+        if (!alive) return
+        setCases(adaptCases(data, lang))
+        setCasesLoading(false)
+      })
+      .catch((err) => {
+        if (!alive) return
+        // Never fall through to the empty state on failure - "no cases yet"
+        // and "the backend is down" must not look identical.
+        setCasesError(err?.message || 'Could not reach the server')
+        setCasesLoading(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [lang, casesReload])
 
   useEffect(() => {
     if (screen === 'case' && s3SectionRef.current) {
@@ -254,6 +221,9 @@ export default function Home() {
 
   // Timer loop
   useEffect(() => {
+    // Set immediately so countdowns are correct on the first painted frame,
+    // not one second later.
+    setNow(Date.now())
     const iv = setInterval(() => {
       setNow(Date.now())
       if (intake === 'recording') {
@@ -262,6 +232,30 @@ export default function Home() {
     }, 1000)
     return () => clearInterval(iv)
   }, [intake])
+
+  // Never leave the microphone open after this screen goes away.
+  useEffect(() => {
+    return () => {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop())
+        audioStreamRef.current = null
+      }
+    }
+  }, [])
+
+  // Object URLs for the captured frame are not garbage collected on their own.
+  useEffect(() => {
+    return () => {
+      if (capPreview) URL.revokeObjectURL(capPreview)
+    }
+  }, [capPreview])
+
+  // Same for the generated PDF.
+  useEffect(() => {
+    return () => {
+      if (docUrl) URL.revokeObjectURL(docUrl)
+    }
+  }, [docUrl])
 
   const isKn = lang === 'kn'
   const L = (knText, enText) => (isKn ? knText : enText)
@@ -300,64 +294,217 @@ export default function Home() {
 
   const cloneCases = () => cases.map((c) => ({ ...c, steps: c.steps.map((s) => ({ ...s })) }))
 
-  const toggleStep = (id, i) => {
-    const nextCases = cloneCases()
-    const targetCase = nextCases.find((c) => c.id === id)
-    if (targetCase && targetCase.steps[i]) {
-      if (targetCase.steps[i].photo) return
-      targetCase.steps[i].done = !targetCase.steps[i].done
-      setCases(nextCases)
+  /**
+   * Tick a checklist step. Updates on screen immediately and persists in the
+   * background - a tap that waits on the network feels broken on a slow phone.
+   * If the PATCH fails the tick is rolled back and the reason surfaced, so the
+   * screen never claims something is saved when it is not.
+   */
+  const toggleStep = async (id, i) => {
+    const targetCase = cases.find((c) => c.id === id)
+    const step = targetCase?.steps[i]
+    if (!targetCase || !step || step.photo) return
+
+    const nextDone = !step.done
+    const previous = cases
+    setCases(
+      cases.map((c) =>
+        c.id === id ? { ...c, steps: c.steps.map((s, idx) => (idx === i ? { ...s, done: nextDone } : s)) } : c
+      )
+    )
+    setStepError(null)
+
+    try {
+      const updated = await setStepDone(id, step.id, nextDone)
+      // Trust the server's version of the case over the optimistic one.
+      const adapted = adaptCase(updated, lang)
+      setCases((current) => current.map((c) => (c.id === id ? adapted : c)))
+    } catch (err) {
+      setCases(previous)
+      setStepError(err?.message || 'Could not save that step')
+    }
+  }
+
+  // Release the microphone. Called on stop, on unmount, and on any failure -
+  // a live mic indicator left burning after the screen closes is unacceptable.
+  const releaseMic = () => {
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach((track) => track.stop())
+      audioStreamRef.current = null
+    }
+    audioRecorderRef.current = null
+  }
+
+  const handleStartRec = async () => {
+    setIntakeError(null)
+    setIntakeResult(null)
+
+    // navigator.mediaDevices is undefined on insecure origins. Checking
+    // explicitly turns a confusing exception into a message naming the fix.
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setIntakeError(t.micInsecure)
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      audioStreamRef.current = stream
+      audioRecorderRef.current = recorder
+      audioChunksRef.current = []
+
+      recorder.ondataavailable = (e) => {
+        if (e.data?.size) audioChunksRef.current.push(e.data)
+      }
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        releaseMic()
+        try {
+          // Pass lang explicitly. Without it the backend auto-detects, and an
+          // English speaker can get Kannada content back despite the toggle.
+          const response = await submitAudio(blob, lang)
+          setIntakeResult(adaptIntake(response, lang))
+          setIntake('clarify')
+        } catch (err) {
+          setIntakeError(err?.message || 'Could not process the recording')
+          setIntake('idle')
+        }
+      }
+
+      recorder.start()
+      setIntake('recording')
+      setRecSec(0)
+    } catch {
+      releaseMic()
+      setIntakeError(t.micBlocked)
+      setIntake('idle')
     }
   }
 
   const handleStopRec = () => {
     setIntake('processing')
-    setTimeout(() => {
-      setIntake('clarify')
-    }, 1700)
+    if (audioRecorderRef.current?.state === 'recording') {
+      // onstop does the upload; it also releases the mic.
+      audioRecorderRef.current.stop()
+    } else {
+      releaseMic()
+      setIntake('idle')
+    }
   }
 
-  const newCase = (opt) => {
-    const nextCases = cloneCases()
-    const c = {
-      id: 'AVD-0153',
-      rule: 'PMFBY §21(2)',
-      schemeKn: 'ಬೆಳೆ ವಿಮೆ — ' + opt.kn,
-      schemeEn: 'Crop insurance — ' + opt.en.toLowerCase(),
-      metaKn: 'ಹತ್ತಿ · ~2 ಎಕರೆ',
-      metaEn: 'Cotton · ~2 acres',
-      eventDate: '29 JUL 2026 · ~ರಾತ್ರಿ',
-      eventDateEn: '29 JUL 2026 · ~night',
-      windowH: 72,
-      windowLabel: '72 ಗಂಟೆ',
-      windowLabelEn: '72 hours',
-      deadline: now + 72 * H,
-      explKn:
-        'ಆಲಿಕಲ್ಲು/ಮಳೆ ಹಾನಿಯನ್ನು 72 ಗಂಟೆಗಳ ಒಳಗೆ ವಿಮಾ ಕಂಪನಿಗೆ ತಿಳಿಸಬೇಕು. ತಡವಾದರೆ, ಪಾಲಿಸಿ ಇದ್ದರೂ ಕ್ಲೈಮ್ ತಿರಸ್ಕೃತವಾಗಬಹುದು. ಈ ಗಡುವು ಸರ್ಕಾರಿ ನಿಯಮ — ಅಂದಾಜು ಅಲ್ಲ.',
-      explEn:
-        'Hail or rain damage must be reported to the insurance company within 72 hours. If late, the claim can be rejected even with a valid policy. This deadline is a government rule — not an estimate.',
-      steps: [
-        { kn: 'ಹೊಲದ ಪೂರ್ಣ ನೋಟ — ದೂರದಿಂದ ಫೋಟೋ', en: 'Wide shot of the field', photo: true, done: false, shot: null },
-        { kn: 'ಹಾನಿಯಾದ ಬೆಳೆಯ ಹತ್ತಿರದ ಫೋಟೋ', en: 'Close-up of damaged crop', photo: true, done: false, shot: null },
-        { kn: 'ಪಾಲಿಸಿ / ಪ್ರೀಮಿಯಂ ರಸೀದಿಯ ಫೋಟೋ', en: 'Policy or premium receipt', photo: true, done: false, shot: null },
-        { kn: 'ಹೆಲ್ಪ್‌ಲೈನ್ 14447 ಗೆ ಕರೆ ಮಾಡಿ', en: 'Call Krishi Rakshak 14447', photo: false, done: false, shot: null },
-        { kn: 'ಕೃಷಿ ಅಧಿಕಾರಿಗೆ ತಿಳಿಸಿ', en: 'Inform the agriculture officer', photo: false, done: false, shot: null },
-      ],
-      channels: [
-        { kn: 'ಕೃಷಿ ರಕ್ಷಕ ಹೆಲ್ಪ್‌ಲೈನ್', en: 'Krishi Rakshak helpline', v: '14447' },
-        { kn: 'ವಿಮಾ ಕಂಪನಿ ಶಾಖೆ', en: 'Insurer branch', v: '—' },
-        { kn: 'ಕೃಷಿ ಇಲಾಖೆ ಕಚೇರಿ', en: 'Agriculture office', v: '—' },
-      ],
-      src: 'pmfby.gov.in — ಮಾರ್ಗಸೂಚಿ §21(2)',
-      verified: '2026-07-27',
+  /**
+   * Take the frame. Draws the live video at its own resolution, burns the
+   * location and time into the corner, and keeps the JPEG for upload.
+   *
+   * The stamp is drawn into the pixels rather than laid over them in the DOM,
+   * because the photo has to carry its own provenance once it leaves the app.
+   */
+  const handleShutter = () => {
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    setCapError(null)
+
+    if (!video || !canvas || !video.videoWidth) {
+      setCapError(t.cameraUnavailable)
+      return
     }
-    if (!nextCases.find((x) => x.id === c.id)) {
-      nextCases.unshift(c)
+
+    const takenAt = new Date()
+    const width = video.videoWidth
+    const height = video.videoHeight
+    canvas.width = width
+    canvas.height = height
+
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, width, height)
+
+    // Stamp. Scaled off the frame width so it is legible at any resolution.
+    const fontSize = Math.max(16, Math.round(width * 0.028))
+    const padding = Math.round(fontSize * 0.75)
+    const line1 = geoCoords.str || t.noLocation
+    const line2 = `${pad(takenAt.getHours())}:${pad(takenAt.getMinutes())}:${pad(takenAt.getSeconds())} IST · ${shortStamp(takenAt)}`
+
+    ctx.font = `600 ${fontSize}px system-ui, sans-serif`
+    const boxWidth = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width) + padding * 2
+    const boxHeight = fontSize * 2 + padding * 2.4
+    ctx.fillStyle = 'rgba(28,28,26,0.6)'
+    ctx.fillRect(padding, height - boxHeight - padding, boxWidth, boxHeight)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillText(line1, padding * 2, height - boxHeight - padding + fontSize + padding * 0.6)
+    ctx.fillText(line2, padding * 2, height - boxHeight - padding + fontSize * 2 + padding)
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setCapError(t.captureFailed)
+          return
+        }
+        capBlobRef.current = blob
+        capTakenAtRef.current = takenAt.toISOString()
+        if (capPreview) URL.revokeObjectURL(capPreview)
+        setCapPreview(URL.createObjectURL(blob))
+        setCaptured(true)
+        setCapFrozen(clock(takenAt.getTime()))
+      },
+      'image/jpeg',
+      0.85
+    )
+  }
+
+  const clearCapture = () => {
+    if (capPreview) URL.revokeObjectURL(capPreview)
+    setCapPreview(null)
+    capBlobRef.current = null
+    capTakenAtRef.current = null
+    setCaptured(false)
+    setCapFrozen(null)
+  }
+
+  /** Upload the frame, then take the server's version of the case as truth. */
+  const handleAttachPhoto = async () => {
+    if (!capBlobRef.current || !capCase) return
+    setCapUploading(true)
+    setCapError(null)
+    const stepId = cases.find((c) => c.id === capCase)?.steps[capIdx]?.id
+
+    try {
+      await uploadPhoto(capCase, capBlobRef.current, {
+        // Null when permission was denied. The backend then records the photo
+        // with location_verified: false rather than rejecting it.
+        lat: geoCoords.lat,
+        lon: geoCoords.lon,
+        accuracy: geoCoords.accuracy,
+        capturedAt: capTakenAtRef.current,
+        stepId,
+      })
+      setCasesReload((n) => n + 1)
+      clearCapture()
+      setCaseId(capCase)
+      setScreen('case')
+    } catch (err) {
+      setCapError(err?.message || 'Could not upload the photo')
+    } finally {
+      setCapUploading(false)
     }
-    setCases(nextCases)
-    setCaseId(c.id)
-    setScreen('case')
+  }
+
+  /**
+   * The backend already created the Case during POST /api/intake, so there is
+   * nothing to fabricate here - just re-read the list and open it.
+   */
+  const goToIntakeCase = async () => {
+    const newId = intakeResult?.caseId
     setIntake('idle')
+    setIntakeResult(null)
+    if (!newId) {
+      // No case means the model could not classify the event, and there is no
+      // endpoint to submit a clarification against. Ask for another recording.
+      setScreen('intake')
+      return
+    }
+    setCasesReload((n) => n + 1)
+    setCaseId(newId)
+    setScreen('case')
   }
 
   // Prepared data
@@ -417,6 +564,8 @@ export default function Home() {
 
   const capStep = capCase != null && ac ? (cs.find((c) => c.id === capCase) || { steps: [] }).steps[capIdx] : null
   const capStamp = captured && capFrozen ? capFrozen : clock(now)
+  // Derived from the ticking `now` state, never Date.now() during render.
+  const stampDate = shortStamp(new Date(now))
 
   const docFacts = ac
     ? [
@@ -440,6 +589,9 @@ export default function Home() {
     toggle: isKn ? 'English' : 'ಕನ್ನಡ',
     bannerKn: L('ಎಚ್ಚರಿಕೆ — ಒಂದು ಗಡುವು 12 ಗಂಟೆಯೊಳಗೆ ಮುಗಿಯುತ್ತದೆ', 'Warning — one deadline closes within 12 hours'),
     bannerEn: L('ಈಗಲೇ ಕ್ರಮ ತೆಗೆದುಕೊಳ್ಳಿ', 'Act now'),
+    loadingCases: L('ಪ್ರಕರಣಗಳನ್ನು ತರಲಾಗುತ್ತಿದೆ…', 'Loading cases…'),
+    casesErrorTitle: L('ಪ್ರಕರಣಗಳನ್ನು ತರಲು ಆಗಲಿಲ್ಲ', 'Could not load cases'),
+    retry: L('ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ', 'Retry'),
     emptyTitle: L('ಇನ್ನೂ ಯಾವ ಪ್ರಕರಣವೂ ಇಲ್ಲ', 'No cases yet'),
     emptyBody: L(
       'ನಷ್ಟವಾಗಿದ್ದರೆ, ಕೆಳಗಿನ ಗುಂಡಿ ಒತ್ತಿ ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ. ಗಡುವಿನ ಗಡಿಯಾರ ತಕ್ಷಣ ಶುರುವಾಗುತ್ತದೆ.',
@@ -471,6 +623,29 @@ export default function Home() {
     factArea: L('ವಿಸ್ತೀರ್ಣ', 'Area'),
     factAreaV: L('~2 ಎಕರೆ', '~2 acres'),
     clarifyQ: L('ಹಾನಿ ಮಾಡಿದ್ದು ಏನು ಕಂಡಿರಿ?', 'What caused the damage?'),
+    clarifyConfirmSub: L('ಸರಿಯಾಗಿದ್ದರೆ ಮುಂದುವರಿಯಿರಿ', 'Continue if this is correct'),
+    stepSaveFailed: L('ಉಳಿಸಲು ಆಗಲಿಲ್ಲ —', 'Could not save —'),
+    noLocation: L('ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ', 'Location unavailable'),
+    cameraUnavailable: L(
+      'ಕ್ಯಾಮೆರಾ ಸಿದ್ಧವಾಗಿಲ್ಲ. ಈ ಪುಟ HTTPS ಅಥವಾ localhost ನಲ್ಲಿ ತೆರೆಯಬೇಕು.',
+      'Camera not ready — this page must be served over HTTPS or localhost.'
+    ),
+    captureFailed: L('ಫೋಟೋ ತೆಗೆಯಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.', 'Could not capture the frame. Try again.'),
+    attaching: L('ಸೇರಿಸಲಾಗುತ್ತಿದೆ…', 'Attaching…'),
+    docGenerating: L('ತಯಾರಿಸಲಾಗುತ್ತಿದೆ…', 'Generating…'),
+    docMockUnavailable: L(
+      'ಮಾಕ್ ಮೋಡ್‌ನಲ್ಲಿ PDF ಲಭ್ಯವಿಲ್ಲ. ನಿಜವಾದ ಬ್ಯಾಕೆಂಡ್ ಚಾಲನೆಯಲ್ಲಿರಬೇಕು.',
+      'PDF unavailable in mock mode — run the real backend to generate it.'
+    ),
+    clarifyContinue: L('ಸರಿ, ಮುಂದುವರಿಯಿರಿ', 'Yes, continue'),
+    micInsecure: L(
+      'ಮೈಕ್ ಸಿಗಲಿಲ್ಲ. ಈ ಪುಟ HTTPS ಅಥವಾ localhost ನಲ್ಲಿ ತೆರೆಯಬೇಕು.',
+      'Microphone unavailable — this page must be served over HTTPS or localhost.'
+    ),
+    micBlocked: L(
+      'ಮೈಕ್ ಸಿಗಲಿಲ್ಲ. ಅನುಮತಿ ಪರಿಶೀಲಿಸಿ, ಮತ್ತು ಪುಟ HTTPS ಅಥವಾ localhost ನಲ್ಲಿದೆಯೇ ನೋಡಿ.',
+      'Microphone blocked — check permissions, and that this page is HTTPS or localhost.'
+    ),
     clarifySub: L('ಒಂದು ಉತ್ತರ ಆರಿಸಿ', 'Pick one answer'),
     privacy: L('ನಿಮ್ಮ ಧ್ವನಿ ಈ ಸಾಧನ ಬಿಟ್ಟು ಹೋಗುವುದಿಲ್ಲ', 'Your voice never leaves this device'),
     timeLeft: L('ಉಳಿದ ಸಮಯ', 'Time remaining'),
@@ -521,87 +696,40 @@ export default function Home() {
     homeNudge: L('ನಿಮ್ಮ ವಿಮೆ ಪತ್ರ ಸೇರಿಸಿ — ಮುಂದಿನ ಬಾರಿ ವರದಿ ಮಾಡಲು 30 ಸೆಕೆಂಡ್ ಸಾಕು', 'Add your policy certificate — reporting will take 30 seconds next time'),
   }
 
-  const generatePdfAndDownload = (targetCase) => {
-    if (!targetCase) return
-    const reportId = `${targetCase.id || 'AVD-0153'}/2026`
-    const title = "CROP LOSS INTIMATION REPORT"
-    const scheme = (isKn ? targetCase.schemeKn : targetCase.schemeEn) || targetCase.schemeEn
-    const rule = targetCase.rule || "PMFBY §21(2)"
-    const date = (isKn ? targetCase.eventDate : targetCase.eventDateEn) || targetCase.eventDate
-    const meta = (isKn ? targetCase.metaKn : targetCase.metaEn) || targetCase.metaEn
-    const dueStr = targetCase.deadline ? new Date(targetCase.deadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + " IST" : "72 hours"
-    const src = targetCase.src || "pmfby.gov.in"
-    const verified = targetCase.verified || "2026-07-27"
-
-    const escapePdf = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
-
-    const stepsAttached = (targetCase.steps || [])
-      .filter((s) => s.shot)
-      .map((s, i) => `EV-0${i + 1}: ${s.en} [${s.shot.coords} at ${s.shot.at} IST]`)
-
-    const lines = [
-      `AVADHI - ${title}`,
-      `Report ID: ${reportId}`,
-      `-----------------------------------------------------------------`,
-      `Scheme: ${scheme}`,
-      `Rule Reference: ${rule}`,
-      `Event Date / Time: ${date}`,
-      `Details: ${meta}`,
-      `Filing Deadline: ${dueStr}`,
-      `-----------------------------------------------------------------`,
-      `FARMER DETAILS (TO BE FILLED BY HAND):`,
-      `Farmer Name: ____________________________________________________`,
-      `Village / Panchayat: ___________________________________________`,
-      `Policy / Application No: ________________________________________`,
-      `Bank Account No: _______________________________________________`,
-      `Mobile No: ____________________________________________________`,
-      `-----------------------------------------------------------------`,
-      `EVIDENCE ATTACHED:`,
-      ...(stepsAttached.length > 0 ? stepsAttached : [`EV-01: Wide shot of field (15.1502N 76.9328E at 07:42 IST)`]),
-      `-----------------------------------------------------------------`,
-      `LEGAL DECLARATION:`,
-      `I declare that the details above are true. This report is an`,
-      `intimation intended to meet the deadline under ${rule}.`,
-      `-----------------------------------------------------------------`,
-      `Signature: ______________________      Date: ____________________`,
-      `-----------------------------------------------------------------`,
-      `Rule Source: ${src} | Verified: ${verified}`,
-      `Prepared with Avadhi - Voice-First Offline Claim Navigator`,
-    ]
-
-    let textStream = ""
-    let y = 740
-    lines.forEach((lineText, idx) => {
-      const isHeader = idx === 0
-      const isSection =
-        lineText.startsWith("FARMER DETAILS") ||
-        lineText.startsWith("EVIDENCE") ||
-        lineText.startsWith("LEGAL DECLARATION")
-      const font = isHeader ? "/F1 14 Tf" : isSection ? "/F1 10 Tf" : "/F2 9.5 Tf"
-      textStream += `BT ${font} 45 ${y} Td (${escapePdf(lineText)}) Tj ET\n`
-      y -= lineText === "" ? 8 : isHeader ? 22 : 15
-    })
-
-    const pdfContent = [
-      "%PDF-1.4\n",
-      "1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj\n",
-      "2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj\n",
-      "3 0 obj <</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>>>> >> endobj\n",
-      "5 0 obj <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold>> endobj\n",
-      "6 0 obj <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> endobj\n",
-      `4 0 obj <</Length ${textStream.length}>> stream\n${textStream}\nendstream\nendobj\n`,
-      `xref\n0 7\n0000000000 65535 f\n0000000009 00000 n\n0000000056 00000 n\n0000000111 00000 n\n0000000300 00000 n\n0000000225 00000 n\n0000000262 00000 n\ntrailer <</Size 7 /Root 1 0 R>>\nstartxref\n500\n%%EOF`,
-    ].join("")
-
-    const blob = new Blob([pdfContent], { type: "application/pdf" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${targetCase.id || 'AVD-0153'}_Loss_Intimation_Report.pdf`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 10000)
+  /**
+   * Fetch the document the backend generates. The UI used to assemble raw
+   * %PDF-1.4 bytes by hand, which meant two divergent definitions of the same
+   * legal form - and only the server's one is derived from the rule files.
+   *
+   * fetchDocument returns an object URL, or null under NEXT_PUBLIC_USE_MOCKS
+   * because there is no real PDF to hand back.
+   */
+  const handleGenerateDoc = async (targetCase) => {
+    if (!targetCase || docLoading) return
+    setDocLoading(true)
+    setDocError(null)
+    try {
+      const url = await fetchDocument(targetCase.ruleId || targetCase.rule, targetCase.event)
+      if (!url) {
+        // Mock mode. Say so rather than opening about:blank.
+        setDocError(t.docMockUnavailable)
+        return
+      }
+      if (docUrl) URL.revokeObjectURL(docUrl)
+      setDocUrl(url)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${targetCase.id}_loss_intimation.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      setShareFlash(true)
+      setTimeout(() => setShareFlash(false), 2200)
+    } catch (err) {
+      setDocError(err?.message || 'Could not generate the document')
+    } finally {
+      setDocLoading(false)
+    }
   }
 
   return (
@@ -998,7 +1126,9 @@ export default function Home() {
           )}
 
           <div style={{ fontSize: 16, fontWeight: 600, color: '#4a4740', margin: '22px 0 12px' }}>
-            {(empty ? 0 : cs.length) + ' ' + L('ಪ್ರಕರಣ ದಾಖಲೆಯಲ್ಲಿ', 'cases on record')}
+            {casesLoading || casesError
+              ? L('ಪ್ರಕರಣಗಳು', 'Cases')
+              : (empty ? 0 : cs.length) + ' ' + L('ಪ್ರಕರಣ ದಾಖಲೆಯಲ್ಲಿ', 'cases on record')}
           </div>
 
           {!empty && soonCount > 0 && (
@@ -1022,14 +1152,43 @@ export default function Home() {
             </div>
           )}
 
-          {empty && (
+          {casesLoading && (
+            <div style={{ background: '#fafaf8', border: '1px solid #e9e7e2', borderRadius: 16, padding: '40px 24px', textAlign: 'center', marginTop: 8 }}>
+              <div style={{ fontSize: 15, color: '#6f6b63', lineHeight: 1.6 }}>{t.loadingCases}</div>
+            </div>
+          )}
+
+          {!casesLoading && casesError && (
+            <div style={{ background: '#fdf3e4', border: '1px solid #ecd9b8', borderRadius: 16, padding: '28px 24px', textAlign: 'center', marginTop: 8 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#5c3400' }}>{t.casesErrorTitle}</div>
+              <div style={{ fontSize: 14, color: '#8a5a10', marginTop: 8, lineHeight: 1.6 }}>{casesError}</div>
+              <button
+                onClick={() => setCasesReload((n) => n + 1)}
+                style={{
+                  marginTop: 18,
+                  minHeight: 48,
+                  padding: '0 26px',
+                  background: '#1c1c1a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 999,
+                  fontSize: 15,
+                  fontWeight: 700,
+                }}
+              >
+                {t.retry}
+              </button>
+            </div>
+          )}
+
+          {!casesLoading && !casesError && empty && (
             <div style={{ background: '#fafaf8', border: '1px solid #e9e7e2', borderRadius: 16, padding: '40px 24px', textAlign: 'center', marginTop: 8 }}>
               <div style={{ fontSize: 18, fontWeight: 700 }}>{t.emptyTitle}</div>
               <div style={{ fontSize: 15, color: '#6f6b63', marginTop: 8, lineHeight: 1.6 }}>{t.emptyBody}</div>
             </div>
           )}
 
-          {!empty &&
+          {!casesLoading && !casesError && !empty &&
             [...live, ...dead].map((c) => {
               const hoursText = fmtShort(c.rem)
               const unitText = c.st === 'expired' ? L('ಮುಗಿದಿದೆ', 'closed') : L('ಗಂ:ನಿ ಉಳಿದಿದೆ', 'hrs:min left')
@@ -1176,11 +1335,24 @@ export default function Home() {
                 <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.whatHappened}</h1>
                 <p style={{ fontSize: 16, lineHeight: 1.65, color: '#4a4740', margin: '14px 0 0' }}>{t.intakeBody}</p>
               </div>
+              {intakeError && (
+                <div
+                  style={{
+                    background: '#fdf3e4',
+                    border: '1px solid #ecd9b8',
+                    borderRadius: 14,
+                    padding: '14px 16px',
+                    marginBottom: 16,
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    color: '#5c3400',
+                  }}
+                >
+                  {intakeError}
+                </div>
+              )}
               <button
-                onClick={() => {
-                  setIntake('recording')
-                  setRecSec(0)
-                }}
+                onClick={handleStartRec}
                 style={{
                   width: '100%',
                   minHeight: 68,
@@ -1269,48 +1441,76 @@ export default function Home() {
             </>
           )}
 
-          {intake === 'clarify' && (
+          {intake === 'clarify' && intakeResult && (
             <div style={{ paddingTop: 16, marginBottom: 20 }}>
               <div style={{ background: '#fafaf8', border: '1px solid #e9e7e2', borderRadius: 14, padding: '14px 16px' }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#4a4740', marginBottom: 8 }}>{t.factsLabel}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '7px 0', borderTop: '1px solid #eeece7' }}>
-                  <span style={{ color: '#6f6b63' }}>{t.factCrop}</span>
-                  <span style={{ fontWeight: 700 }}>{t.factCropV}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '7px 0', borderTop: '1px solid #eeece7' }}>
-                  <span style={{ color: '#6f6b63' }}>{t.factWhen}</span>
-                  <span style={{ fontWeight: 700 }}>{t.factWhenV}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '7px 0', borderTop: '1px solid #eeece7' }}>
-                  <span style={{ color: '#6f6b63' }}>{t.factArea}</span>
-                  <span style={{ fontWeight: 700 }}>{t.factAreaV}</span>
-                </div>
+                {[
+                  { k: t.factCrop, v: intakeResult.facts.crop },
+                  { k: t.factWhen, v: intakeResult.facts.when },
+                  { k: t.factArea, v: intakeResult.facts.area },
+                ]
+                  // Only show what the model actually extracted. A blank row
+                  // reads as "we know this and it is empty", which is worse.
+                  .filter((row) => row.v)
+                  .map((row, idx) => (
+                    <div
+                      key={idx}
+                      style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '7px 0', borderTop: '1px solid #eeece7' }}
+                    >
+                      <span style={{ color: '#6f6b63' }}>{row.k}</span>
+                      <span style={{ fontWeight: 700 }}>{row.v}</span>
+                    </div>
+                  ))}
               </div>
-              <h2 style={{ fontSize: 22, fontWeight: 700, margin: '26px 0 4px', lineHeight: 1.35 }}>{t.clarifyQ}</h2>
-              <div style={{ fontSize: 13, color: '#6f6b63', marginBottom: 16 }}>{t.clarifySub}</div>
-              {[
-                { kn: 'ಆಲಿಕಲ್ಲು ಮಳೆ', en: 'Hailstorm' },
-                { kn: 'ಅತಿವೃಷ್ಟಿ — ನೀರು ನಿಂತಿದೆ', en: 'Flooding / waterlogging' },
-                { kn: 'ಬಿರುಗಾಳಿ / ಗಾಳಿ ಹಾನಿ', en: 'Windstorm' },
-              ].map((o, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => newCase(o)}
-                  style={{
-                    width: '100%',
-                    minHeight: 60,
-                    textAlign: 'left',
-                    background: '#ffffff',
-                    border: '1px solid #d9d6cf',
-                    borderRadius: 14,
-                    padding: '14px 18px',
-                    marginBottom: 10,
-                  }}
-                >
-                  <span style={{ display: 'block', fontSize: 17, fontWeight: 700 }}>{L(o.kn, o.en)}</span>
-                  {isKn && <span style={{ display: 'block', fontSize: 12, color: '#6f6b63', marginTop: 1 }}>{o.en}</span>}
-                </button>
-              ))}
+
+              {intakeResult.transcript && (
+                <div style={{ fontSize: 13, color: '#6f6b63', marginTop: 12, lineHeight: 1.6 }}>“{intakeResult.transcript}”</div>
+              )}
+
+              <h2 style={{ fontSize: 22, fontWeight: 700, margin: '26px 0 4px', lineHeight: 1.35 }}>
+                {intakeResult.question || t.clarifyQ}
+              </h2>
+              <div style={{ fontSize: 13, color: '#6f6b63', marginBottom: 16 }}>
+                {intakeResult.options.length > 0 ? t.clarifySub : t.clarifyConfirmSub}
+              </div>
+
+              {intakeResult.options.length > 0
+                ? intakeResult.options.map((o, idx) => (
+                    <button
+                      key={idx}
+                      onClick={goToIntakeCase}
+                      style={{
+                        width: '100%',
+                        minHeight: 60,
+                        textAlign: 'left',
+                        background: '#ffffff',
+                        border: '1px solid #d9d6cf',
+                        borderRadius: 14,
+                        padding: '14px 18px',
+                        marginBottom: 10,
+                      }}
+                    >
+                      <span style={{ display: 'block', fontSize: 17, fontWeight: 700 }}>{o}</span>
+                    </button>
+                  ))
+                : (
+                  <button
+                    onClick={goToIntakeCase}
+                    style={{
+                      width: '100%',
+                      minHeight: 60,
+                      textAlign: 'left',
+                      background: '#ffffff',
+                      border: '1px solid #d9d6cf',
+                      borderRadius: 14,
+                      padding: '14px 18px',
+                      marginBottom: 10,
+                    }}
+                  >
+                    <span style={{ display: 'block', fontSize: 17, fontWeight: 700 }}>{t.clarifyContinue}</span>
+                  </button>
+                )}
             </div>
           )}
 
@@ -1431,6 +1631,23 @@ export default function Home() {
             <span style={{ fontSize: 15, fontWeight: 700 }}>{t.checklist}</span>
             <span style={{ fontSize: 13, color: '#6f6b63' }}>{ac.steps.filter((x) => x.done).length + ' / ' + ac.steps.length}</span>
           </div>
+
+          {stepError && (
+            <div
+              style={{
+                background: '#fdf3e4',
+                border: '1px solid #ecd9b8',
+                borderRadius: 14,
+                padding: '12px 14px',
+                marginBottom: 12,
+                fontSize: 13.5,
+                lineHeight: 1.6,
+                color: '#5c3400',
+              }}
+            >
+              {t.stepSaveFailed} {stepError}
+            </div>
+          )}
 
           {acSteps.map((s) => (
             <div
@@ -1594,10 +1811,15 @@ export default function Home() {
             />
             {captured && (
               <div style={{ width: '100%', height: '100%', background: '#26292b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8">
-                  <path d="M3 7h4l2-3h6l2 3h4v13H3z" />
-                  <circle cx="12" cy="13" r="3.5" />
-                </svg>
+                {capPreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={capPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8">
+                    <path d="M3 7h4l2-3h6l2 3h4v13H3z" />
+                    <circle cx="12" cy="13" r="3.5" />
+                  </svg>
+                )}
               </div>
             )}
             {!captured && (
@@ -1640,19 +1862,35 @@ export default function Home() {
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {geoCoords.str}
+              {geoCoords.str || t.noLocation}
               <br />
-              {capStamp} IST · 30 JUL 2026
+              {capStamp} IST · {stampDate}
             </div>
           </div>
+
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+          {capError && (
+            <div
+              style={{
+                background: '#fdf3e4',
+                border: '1px solid #ecd9b8',
+                borderRadius: 14,
+                padding: '12px 14px',
+                marginTop: 14,
+                fontSize: 13.5,
+                lineHeight: 1.6,
+                color: '#5c3400',
+              }}
+            >
+              {capError}
+            </div>
+          )}
 
           {!captured && (
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
               <button
-                onClick={() => {
-                  setCaptured(true)
-                  setCapFrozen(clock(now))
-                }}
+                onClick={handleShutter}
                 aria-label="Capture"
                 style={{ width: 78, height: 78, borderRadius: '50%', background: '#ffffff', border: '3px solid #1c1c1a', position: 'relative' }}
               >
@@ -1664,34 +1902,18 @@ export default function Home() {
           {captured && (
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button
-                onClick={() => {
-                  setCaptured(false)
-                  setCapFrozen(null)
-                }}
-                style={{ flex: 1, minHeight: 56, background: '#ffffff', border: '1px solid #d9d6cf', borderRadius: 999, fontSize: 15, fontWeight: 700 }}
+                onClick={clearCapture}
+                disabled={capUploading}
+                style={{ flex: 1, minHeight: 56, background: '#ffffff', border: '1px solid #d9d6cf', borderRadius: 999, fontSize: 15, fontWeight: 700, opacity: capUploading ? 0.5 : 1 }}
               >
                 {t.retake}
               </button>
               <button
-                onClick={() => {
-                  const nextCases = cloneCases()
-                  const targetCase = nextCases.find((c) => c.id === capCase)
-                  if (targetCase && targetCase.steps[capIdx]) {
-                    targetCase.steps[capIdx].done = true
-                    targetCase.steps[capIdx].shot = {
-                      at: capFrozen ? capFrozen.slice(0, 5) : '--:--',
-                      coords: geoCoords.shortStr,
-                    }
-                  }
-                  setCases(nextCases)
-                  setCaseId(capCase)
-                  setCaptured(false)
-                  setCapFrozen(null)
-                  setScreen('case')
-                }}
-                style={{ flex: 2, minHeight: 56, background: '#1b5e3f', color: '#ffffff', border: 'none', borderRadius: 999, fontSize: 15, fontWeight: 700 }}
+                onClick={handleAttachPhoto}
+                disabled={capUploading}
+                style={{ flex: 2, minHeight: 56, background: '#1b5e3f', color: '#ffffff', border: 'none', borderRadius: 999, fontSize: 15, fontWeight: 700, opacity: capUploading ? 0.6 : 1 }}
               >
-                {t.attach}
+                {capUploading ? t.attaching : t.attach}
               </button>
             </div>
           )}
@@ -1785,13 +2007,27 @@ export default function Home() {
                 </div>
               </div>
 
+              {docError && (
+                <div
+                  style={{
+                    background: '#fdf3e4',
+                    border: '1px solid #ecd9b8',
+                    borderRadius: 14,
+                    padding: '12px 14px',
+                    marginTop: 16,
+                    fontSize: 13.5,
+                    lineHeight: 1.6,
+                    color: '#5c3400',
+                  }}
+                >
+                  {docError}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
                 <button
-                  onClick={() => {
-                    generatePdfAndDownload(ac)
-                    setShareFlash(true)
-                    setTimeout(() => setShareFlash(false), 2200)
-                  }}
+                  onClick={() => handleGenerateDoc(ac)}
+                  disabled={docLoading}
                   style={{
                     flex: 2,
                     minHeight: 56,
@@ -1801,6 +2037,7 @@ export default function Home() {
                     borderRadius: 999,
                     fontSize: 15,
                     fontWeight: 700,
+                    opacity: docLoading ? 0.6 : 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1812,7 +2049,7 @@ export default function Home() {
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  {shareFlash ? t.docDownloaded : t.docDownload}
+                  {docLoading ? t.docGenerating : shareFlash ? t.docDownloaded : t.docDownload}
                 </button>
                  <button
                   onClick={() => {
