@@ -148,6 +148,64 @@ export default function Home() {
     }
   }, [screen])
 
+  // Dynamic Camera Stream Refs & Effect
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+
+  useEffect(() => {
+    if (screen === 'capture') {
+      let isMounted = true
+      if (typeof window !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices
+          .getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+            audio: false,
+          })
+          .then((stream) => {
+            if (!isMounted) {
+              stream.getTracks().forEach((t) => t.stop())
+              return
+            }
+            streamRef.current = stream
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream
+              videoRef.current.play().catch(() => {})
+            }
+          })
+          .catch(() => {
+            if (navigator.mediaDevices.getUserMedia) {
+              navigator.mediaDevices
+                .getUserMedia({ video: true, audio: false })
+                .then((stream) => {
+                  if (!isMounted) {
+                    stream.getTracks().forEach((t) => t.stop())
+                    return
+                  }
+                  streamRef.current = stream
+                  if (videoRef.current) {
+                    videoRef.current.srcObject = stream
+                    videoRef.current.play().catch(() => {})
+                  }
+                })
+                .catch(() => {})
+            }
+          })
+      }
+      return () => {
+        isMounted = false
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop())
+          streamRef.current = null
+        }
+      }
+    } else {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+      }
+    }
+  }, [screen])
+
   // Cases list
   const [cases, setCases] = useState([])
 
@@ -734,7 +792,7 @@ export default function Home() {
 
       {/* S2 Voice Intake Screen */}
       {screen === 'intake' && (
-        <section data-screen-label="S2 Voice Intake" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 40px', display: 'flex', flexDirection: 'column' }}>
+        <section data-screen-label="S2 Voice Intake" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 20px', display: 'flex', flexDirection: 'column' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => {
@@ -763,7 +821,7 @@ export default function Home() {
 
           {intake === 'idle' && (
             <>
-              <div style={{ flex: 1, paddingTop: 28 }}>
+              <div style={{ flex: 1, paddingTop: 16 }}>
                 <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0, lineHeight: 1.25 }}>{t.whatHappened}</h1>
                 <p style={{ fontSize: 16, lineHeight: 1.65, color: '#4a4740', margin: '14px 0 0' }}>{t.intakeBody}</p>
               </div>
@@ -774,7 +832,7 @@ export default function Home() {
                 }}
                 style={{
                   width: '100%',
-                  minHeight: 80,
+                  minHeight: 68,
                   background: '#1c1c1a',
                   color: '#ffffff',
                   border: 'none',
@@ -800,7 +858,7 @@ export default function Home() {
 
           {intake === 'recording' && (
             <>
-              <div style={{ flex: 1, paddingTop: 28 }}>
+              <div style={{ flex: 1, paddingTop: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#b3341e', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#b3341e', animation: 'pulse 1.2s infinite' }} />
                   {t.listening}
@@ -814,7 +872,7 @@ export default function Home() {
                 onClick={handleStopRec}
                 style={{
                   width: '100%',
-                  minHeight: 80,
+                  minHeight: 68,
                   background: '#b3341e',
                   color: '#ffffff',
                   border: 'none',
@@ -844,7 +902,7 @@ export default function Home() {
                 disabled
                 style={{
                   width: '100%',
-                  minHeight: 80,
+                  minHeight: 68,
                   background: '#1c1c1a',
                   color: '#ffffff',
                   border: 'none',
@@ -911,12 +969,14 @@ export default function Home() {
               color: '#1b5e3f',
               fontWeight: 700,
               textAlign: 'center',
-              marginTop: 24,
+              marginTop: 14,
+              marginBottom: 4,
               lineHeight: 1.6,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
+              flex: 'none',
             }}
           >
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1165,8 +1225,23 @@ export default function Home() {
           <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.4, marginTop: 16 }}>{capStep ? L(capStep.kn, capStep.en) : ''}</div>
 
           <div style={{ position: 'relative', marginTop: 14, aspectRatio: '3/3.6', background: '#1c1c1a', borderRadius: 18, overflow: 'hidden' }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: captured ? 'none' : 'block' }}
+            />
+            {captured && (
+              <div style={{ width: '100%', height: '100%', background: '#26292b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8">
+                  <path d="M3 7h4l2-3h6l2 3h4v13H3z" />
+                  <circle cx="12" cy="13" r="3.5" />
+                </svg>
+              </div>
+            )}
             {!captured && (
-              <div style={{ position: 'absolute', top: 16, left: 0, right: 0, textAlign: 'center', fontSize: 12, letterSpacing: '0.06em', color: 'rgba(255,255,255,.75)' }}>
+              <div style={{ position: 'absolute', top: 16, left: 0, right: 0, textAlign: 'center', fontSize: 12, letterSpacing: '0.06em', color: 'rgba(255,255,255,.9)', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>
                 <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#e05a44', marginRight: 7, animation: 'pulse 1.2s infinite', verticalAlign: 'middle' }} />
                 {t.camLive}
               </div>
@@ -1178,7 +1253,7 @@ export default function Home() {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%,-50%)',
-                  background: 'rgba(255,255,255,.14)',
+                  background: 'rgba(28,28,26,.85)',
                   border: '1px solid rgba(255,255,255,.5)',
                   borderRadius: 999,
                   color: '#ffffff',
