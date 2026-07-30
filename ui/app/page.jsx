@@ -131,6 +131,18 @@ export default function Home() {
   const [captured, setCaptured] = useState(false)
   const [capFrozen, setCapFrozen] = useState(null)
 
+  // Scroll preservation for Evidence Checklist
+  const s3SectionRef = useRef(null)
+  const checklistRef = useRef(null)
+  const savedChecklistScrollRef = useRef(350)
+
+  useEffect(() => {
+    if (screen === 'case' && s3SectionRef.current) {
+      const targetScroll = savedChecklistScrollRef.current > 0 ? savedChecklistScrollRef.current : 350
+      s3SectionRef.current.scrollTop = targetScroll
+    }
+  }, [screen, cases])
+
   // Document states
   const [docReady, setDocReady] = useState(true)
   const [shareFlash, setShareFlash] = useState(false)
@@ -370,6 +382,9 @@ export default function Home() {
         numCol: s.done ? '#ffffff' : '#4a4740',
         numBorder: s.done ? '#1b8a5a' : '#d9d6cf',
         tap: () => {
+          if (s3SectionRef.current && s3SectionRef.current.scrollTop > 0) {
+            savedChecklistScrollRef.current = s3SectionRef.current.scrollTop
+          }
           if (s.photo && !s.done) {
             setCapCase(ac.id)
             setCapIdx(i)
@@ -587,7 +602,6 @@ export default function Home() {
             alignItems: 'center',
             gap: 10,
             whiteSpace: 'nowrap',
-            animation: 'pulse 1.2s infinite',
           }}
         >
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3">
@@ -1005,7 +1019,16 @@ export default function Home() {
 
       {/* S3 Case Detail Screen */}
       {screen === 'case' && ac && (
-        <section data-screen-label="S3 Case Detail" style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 100px' }}>
+        <section
+          ref={s3SectionRef}
+          data-screen-label="S3 Case Detail"
+          onScroll={(e) => {
+            if (e.currentTarget.scrollTop > 0) {
+              savedChecklistScrollRef.current = e.currentTarget.scrollTop
+            }
+          }}
+          style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 100px' }}
+        >
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button
               onClick={() => setScreen('home')}
@@ -1082,7 +1105,7 @@ export default function Home() {
           <div style={{ fontSize: 12, color: '#6f6b63' }}>{isKn ? `${ac.schemeEn} · ${ac.metaKn}` : ac.metaEn}</div>
           <p style={{ fontSize: 16, lineHeight: 1.65, margin: '12px 0 0', color: '#2e2d2a' }}>{L(ac.explKn, ac.explEn)}</p>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '28px 0 12px' }}>
+          <div ref={checklistRef} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '28px 0 12px' }}>
             <span style={{ fontSize: 15, fontWeight: 700 }}>{t.checklist}</span>
             <span style={{ fontSize: 13, color: '#6f6b63' }}>{ac.steps.filter((x) => x.done).length + ' / ' + ac.steps.length}</span>
           </div>
@@ -1475,7 +1498,7 @@ export default function Home() {
                     setTimeout(() => {
                       setShowSuccessToast(false)
                       setScreen('home')
-                    }, 1800)
+                    }, 2200)
                   }}
                   style={{ flex: 1, minHeight: 56, background: '#ffffff', border: '1px solid #d9d6cf', borderRadius: 999, fontSize: 15, fontWeight: 700 }}
                 >
