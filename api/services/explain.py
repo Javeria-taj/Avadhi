@@ -66,6 +66,16 @@ def explain(claim: ClaimWindow, lang: str = "kn") -> str:
         return _template(claim, lang)
 
 
+def relocalise(claim: ClaimWindow, lang: str) -> str:
+    """Explanation in `lang` without a model call.
+
+    Used when re-reading a stored case in a different language. Regenerating
+    via the model would be slow and non-deterministic on a screen the user is
+    already looking at; the templates are correct and instant.
+    """
+    return _template(claim, lang)
+
+
 def attach_explanations(
     claims: list[ClaimWindow], lang: str = "kn"
 ) -> list[ClaimWindow]:

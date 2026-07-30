@@ -99,3 +99,17 @@ def test_every_claim_carries_its_source_citation(snapshot):
         claim = ClaimWindow(**raw["claim"])
         assert claim.source_url
         assert claim.verified_on
+
+
+def test_snapshot_has_a_fully_completed_case(snapshot):
+    """Mock mode is the emergency fallback. Without a completed case the
+    document screen is unreachable there."""
+    case = snapshot["GET /api/cases/{id} (all steps done)"]
+    assert case["steps"]
+    assert all(step["done"] for step in case["steps"])
+
+
+def test_snapshot_has_an_english_case_list(snapshot):
+    body = snapshot["GET /api/cases?lang=en"]
+    assert body
+    assert all(case["claim"]["lang"] == "en" for case in body)

@@ -66,5 +66,39 @@
     "Write down the exact date and time the damage happened",
     "Keep your policy certificate and bank passbook to hand"
   ],
-  "failure_consequence_en": "If you do not report within 72 hours, the claim can be rejected even though the crop was genuinely damaged."
+  "failure_consequence_en": "If you do not report within 72 hours, the claim can be rejected even though the crop was genuinely damaged.",
+  "required_documents_en": [
+    "Policy certificate or premium payment receipt",
+    "Bank passbook - first page photocopy",
+    "Aadhaar card photocopy",
+    "Land record (RTC / Pahani / 7-12 extract) for the affected survey number",
+    "Sowing certificate, if your bank or insurer asks for one",
+    "Printed or phone photographs of the damaged crop"
+  ],
+  "required_documents_kn": [
+    "ಪಾಲಿಸಿ ಪ್ರಮಾಣಪತ್ರ ಅಥವಾ ಪ್ರೀಮಿಯಂ ರಸೀದಿ",
+    "ಬ್ಯಾಂಕ್ ಪಾಸ್‌ಬುಕ್ - ಮೊದಲ ಪುಟದ ಪ್ರತಿ",
+    "ಆಧಾರ್ ಕಾರ್ಡ್ ಪ್ರತಿ",
+    "ಹಾನಿಯಾದ ಸರ್ವೆ ನಂಬರ್‌ನ ಪಹಣಿ / ಆರ್‌ಟಿಸಿ",
+    "ಬಿತ್ತನೆ ಪ್ರಮಾಣಪತ್ರ - ಬ್ಯಾಂಕ್ ಕೇಳಿದರೆ",
+    "ಹಾನಿಯಾದ ಬೆಳೆಯ ಫೋಟೋಗಳು"
+  ],
+  "window_description_en": "72 hours from the loss",
+  "window_description_kn": "ಹಾನಿಯಾದ 72 ಗಂಟೆಯೊಳಗೆ",
+  "channels_kn": [
+    "ಬೆಳೆ ವಿಮಾ ಮೊಬೈಲ್ ಆ್ಯಪ್",
+    "pmfby.gov.in - ಬೆಳೆ ಹಾನಿ ವರದಿ",
+    "ಕೃಷಿ ರಕ್ಷಕ್ ಸಹಾಯವಾಣಿ 14447",
+    "ವಿಮಾ ಕಂಪನಿ ಕಾಲ್ ಸೆಂಟರ್ - ಪಾಲಿಸಿಯಲ್ಲಿ ಇರುವ ಸಂಖ್ಯೆ",
+    "ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಶಾಖೆ",
+    "ಜಿಲ್ಲಾ ಅಥವಾ ತಾಲ್ಲೂಕು ಕೃಷಿ ಅಧಿಕಾರಿ"
+  ],
+  "channels_en": [
+    "Crop Insurance mobile app",
+    "pmfby.gov.in - Report Crop Loss",
+    "Krishi Rakshak Helpline (VERIFY NUMBER ON pmfby.gov.in BEFORE DEMO)",
+    "Insurance company call centre - number printed on your policy certificate",
+    "Your financing bank branch",
+    "District or block agriculture officer"
+  ]
 }

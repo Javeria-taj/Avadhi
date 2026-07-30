@@ -13,7 +13,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, Response, UploadFile
 
 from api.models.schemas import Case, StepUpdate
 from api.services import cases as store
@@ -23,29 +23,39 @@ router = APIRouter()
 
 
 @router.get("/cases", response_model=list[Case])
-async def list_cases() -> list[Case]:
+async def list_cases(lang: str | None = Query(None, pattern="^(kn|en)$")) -> list[Case]:
     """Every case, most urgent first.
 
     Claims are recomputed on read so the countdown is never stale - a case
     written 20 hours ago must not report the hours it had then.
+
+    `lang` re-localises stored cases, so the language toggle affects cases that
+    already exist rather than only new ones.
     """
-    return [store.recompute(case) for case in store.list_cases()]
+    return [store.recompute(case, lang) for case in store.list_cases()]
 
 
 @router.get("/cases/{case_id}", response_model=Case)
-async def get_case(case_id: str) -> Case:
+async def get_case(
+    case_id: str, lang: str | None = Query(None, pattern="^(kn|en)$")
+) -> Case:
     case = store.get_case(case_id)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    return store.recompute(case)
+    return store.recompute(case, lang)
 
 
 @router.patch("/cases/{case_id}/steps/{step_id}", response_model=Case)
-async def update_step(case_id: str, step_id: str, update: StepUpdate) -> Case:
+async def update_step(
+    case_id: str,
+    step_id: str,
+    update: StepUpdate,
+    lang: str | None = Query(None, pattern="^(kn|en)$"),
+) -> Case:
     case = store.set_step_done(case_id, step_id, update.done)
     if case is None:
         raise HTTPException(status_code=404, detail="Case or step not found")
-    return store.recompute(case)
+    return store.recompute(case, lang)
 
 
 @router.post("/cases/{case_id}/photo")

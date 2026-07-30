@@ -100,6 +100,14 @@ class ClaimWindow(BaseModel):
     evidence_checklist: list[str] = Field(default_factory=list)
     explanation: str | None = None
     failure_consequence: str | None = None
+
+    # What to carry to the counter, alongside the generated document.
+    # Human-readable window, e.g. "72 hours" or "3 working days". The RBI rule
+    # renders as hours-remaining otherwise, which loses the whole point.
+    window_description: str | None = None
+    required_documents: list[str] = Field(default_factory=list)
+    required_documents_kn: list[str] = Field(default_factory=list)
+    required_documents_en: list[str] = Field(default_factory=list)
     source_url: str | None = None
     verified_on: str | None = None
     form_id: str | None = None

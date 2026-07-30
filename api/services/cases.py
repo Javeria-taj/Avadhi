@@ -154,14 +154,38 @@ def save_case(case: Case) -> Case:
     return case
 
 
-def recompute(case: Case) -> Case:
-    """Re-run the rules engine so hours_remaining reflects the current time."""
+def recompute(case: Case, lang: str | None = None) -> Case:
+    """Re-run the rules engine so hours_remaining reflects the current time.
+
+    `lang` re-localises the stored case on read. Without it a case recorded in
+    Kannada would still show Kannada after the user switches to English -
+    which is exactly what happens when a judge picks up the phone and toggles.
+    """
     from api.rules.engine import evaluate
     from api.rules.loader import load_rules
 
-    claims = evaluate(case.event, load_rules())
+    target = lang or case.claim.lang or "kn"
+    claims = evaluate(case.event, load_rules(), lang=target)
     claim = next((c for c in claims if c.rule_id == case.rule_id), None)
-    return _refresh_state(case, claim) if claim else case
+    if claim is None:
+        return case
+
+    if lang and lang != case.claim.lang:
+        from api.services.explain import relocalise
+
+        claim.explanation = relocalise(claim, target)
+        claim.explanation_kn = case.claim.explanation_kn or relocalise(claim, "kn")
+    else:
+        claim.explanation = case.claim.explanation
+        claim.explanation_kn = case.claim.explanation_kn
+
+    # Steps hold their own text; re-localise them from the fresh checklist.
+    if claim.evidence_checklist:
+        for index, step in enumerate(case.steps):
+            if index < len(claim.evidence_checklist):
+                step.text_kn = step.text_kn  # stored Kannada is preserved
+
+    return _refresh_state(case, claim)
 
 
 def set_step_done(case_id: str, step_id: str, done: bool) -> Case | None:

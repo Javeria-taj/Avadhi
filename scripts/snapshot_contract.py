@@ -137,6 +137,31 @@ def build() -> dict:
         f"/api/cases/{first}"
     ).json()
 
+    # A case with EVERY step ticked. Without this, mock mode can never reach the
+    # document screen - which matters because mock mode IS the fallback if
+    # inference dies before the demo.
+    done_case = _seed_case(
+        EventReport(
+            event_type=EventType.HAILSTORM,
+            event_datetime=now - timedelta(hours=12),
+            crop="sunflower",
+            area_acres=2.2,
+            has_pmfby_policy=True,
+            district="Ballari",
+        ),
+        "PMFBY_LOCALISED",
+    )
+    for step in client.get(f"/api/cases/{done_case.case_id}").json()["steps"]:
+        client.patch(
+            f"/api/cases/{done_case.case_id}/steps/{step['step_id']}", json={"done": True}
+        )
+    snapshot["GET /api/cases/{id} (all steps done)"] = client.get(
+        f"/api/cases/{done_case.case_id}"
+    ).json()
+
+    # English reads of a stored case, for the language toggle.
+    snapshot["GET /api/cases?lang=en"] = client.get("/api/cases?lang=en").json()
+
     # --- intake, both languages ---------------------------------------------
     audio = {"audio": ("clip.webm", io.BytesIO(b"fake"), "audio/webm")}
     snapshot["POST /api/intake (kn)"] = client.post("/api/intake", files=audio).json()

@@ -164,9 +164,9 @@ def test_a_reported_case_does_not_revert_to_expired():
 
 def test_recompute_refreshes_hours_remaining():
     case = make_hail_case()
-    raw = json.loads((settings.data_dir / "cases.json").read_text(encoding="utf-8"))
+    raw = json.loads((settings.data_dir / "cases.json").read_text())
     raw[case.case_id]["claim"]["hours_remaining"] = 999.0
-    (settings.data_dir / "cases.json").write_text(json.dumps(raw, default=str), encoding="utf-8")
+    (settings.data_dir / "cases.json").write_text(json.dumps(raw, default=str))
 
     assert store.recompute(store.get_case(case.case_id)).claim.hours_remaining < 100
 
@@ -293,3 +293,80 @@ def test_every_rule_has_english_content():
     for rule in RULES:
         assert rule.get("evidence_checklist_en"), f"{rule['rule_id']} has no English checklist"
         assert rule.get("failure_consequence_en"), f"{rule['rule_id']} has no English consequence"
+
+
+# --- re-localising an existing case ------------------------------------------
+
+def test_a_kannada_case_reads_back_in_english_when_asked():
+    """The demo moment: a judge picks up the phone and taps English on a case
+    that was recorded in Kannada. Without this it stays Kannada."""
+    case = make_hail_case()
+    english = client.get(f"/api/cases/{case.case_id}?lang=en").json()
+    assert english["claim"]["lang"] == "en"
+    assert any("Photograph" in step for step in english["claim"]["evidence_checklist"])
+
+
+def test_case_list_re_localises_too():
+    make_hail_case()
+    body = client.get("/api/cases?lang=en").json()
+    assert body[0]["claim"]["lang"] == "en"
+
+
+def test_kannada_fields_survive_an_english_read():
+    case = make_hail_case()
+    english = client.get(f"/api/cases/{case.case_id}?lang=en").json()
+    assert english["claim"]["evidence_checklist_kn"]
+    assert "Photograph" not in " ".join(english["claim"]["evidence_checklist_kn"])
+
+
+def test_an_invalid_lang_is_rejected_not_silently_ignored():
+    case = make_hail_case()
+    assert client.get(f"/api/cases/{case.case_id}?lang=fr").status_code == 422
+
+
+def test_no_lang_keeps_the_stored_language():
+    case = make_hail_case()
+    body = client.get(f"/api/cases/{case.case_id}").json()
+    assert body["claim"]["lang"] == "kn"
+
+
+# --- window description -------------------------------------------------------
+
+def test_rbi_window_reads_as_working_days_not_hours():
+    """'110 hours' loses the entire working-day argument."""
+    from api.models.schemas import EventReport as ER
+
+    event = ER(
+        event_type=EventType.UNAUTHORISED_TRANSACTION,
+        bank_communication_datetime=datetime.now(IST) - timedelta(hours=4),
+        has_bank_account=True,
+    )
+    en = next(
+        c for c in evaluate(event, RULES, lang="en") if c.rule_id == "RBI_UNAUTH_TXN"
+    )
+    assert "working days" in (en.window_description or "")
+
+    kn = next(
+        c for c in evaluate(event, RULES, lang="kn") if c.rule_id == "RBI_UNAUTH_TXN"
+    )
+    assert "ಕೆಲಸದ ದಿನ" in (kn.window_description or "")
+
+
+def test_every_rule_has_a_window_description_in_both_languages():
+    for rule in RULES:
+        assert rule.get("window_description_en"), rule["rule_id"]
+        assert rule.get("window_description_kn"), rule["rule_id"]
+
+
+def test_channels_are_localised():
+    """Previously the Kannada UI showed English channel labels."""
+    event = EventReport(
+        event_type=EventType.HAILSTORM,
+        event_datetime=datetime.now(IST) - timedelta(hours=24),
+        has_pmfby_policy=True,
+    )
+    kn = next(c for c in evaluate(event, RULES, lang="kn") if c.rule_id == "PMFBY_LOCALISED")
+    en = next(c for c in evaluate(event, RULES, lang="en") if c.rule_id == "PMFBY_LOCALISED")
+    assert kn.channels != en.channels
+    assert any("14447" in c for c in kn.channels)
+    assert any("Crop Insurance" in c for c in en.channels)
