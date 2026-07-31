@@ -272,3 +272,46 @@ def test_braces_inside_strings_do_not_confuse_the_parser():
 
     raw = 'Sure: {"crop": "cotton {kapas}", "area_acres": 1.5}'
     assert _json.loads(_extract_json(raw))["crop"] == "cotton {kapas}"
+
+
+# --- Indic relative dates -----------------------------------------------------
+
+@pytest.mark.parametrize(
+    "phrase",
+    ["ನಿನ್ನೆ ರಾತ್ರಿ", "ನಿನ್ನೆ", "ಇಂದು", "ಮೊನ್ನೆ", "ಕಳೆದ ವಾರ", "ಈಗ", "कल रात", "कल"],
+)
+def test_indic_phrases_resolve(phrase):
+    """Regression: \\b is defined against isalnum() characters, and Kannada words
+    end in combining vowel signs which are NOT alnum. A \\b-anchored pattern
+    therefore never matched, event_datetime came back null, and the user saw no
+    countdown - with nothing in the logs."""
+    resolved, confidence = resolve_relative_datetime(phrase, now=NOW)
+    assert resolved is not None, f"{phrase} did not resolve"
+    assert confidence > 0
+
+
+def test_longer_indic_phrase_wins_over_its_prefix():
+    """Without a word boundary, 'ನಿನ್ನೆ' would shadow 'ನಿನ್ನೆ ರಾತ್ರಿ'.
+    Ordering in _INDIC_PATTERNS is load-bearing."""
+    last_night, _ = resolve_relative_datetime("ನಿನ್ನೆ ರಾತ್ರಿ", now=NOW)
+    yesterday, _ = resolve_relative_datetime("ನಿನ್ನೆ", now=NOW)
+    assert last_night != yesterday
+    assert last_night > yesterday
+
+
+def test_kannada_phrase_inside_a_sentence_resolves():
+    resolved, _ = resolve_relative_datetime("ನಿನ್ನೆ ರಾತ್ರಿ ಆಲಿಕಲ್ಲು ಬಿದ್ದಿದೆ", now=NOW)
+    assert resolved is not None
+
+
+def test_a_kannada_event_produces_a_real_countdown():
+    """End to end: the failure this bug caused was a missing countdown."""
+    resolved, _ = resolve_relative_datetime("ನಿನ್ನೆ ರಾತ್ರಿ", now=NOW)
+    event = EventReport(
+        event_type=EventType.HAILSTORM,
+        event_datetime=resolved,
+        has_pmfby_policy=True,
+    )
+    claim = _find(evaluate(event, RULES, now=NOW), "PMFBY_LOCALISED")
+    assert claim.status is ClaimStatus.OPEN
+    assert claim.hours_remaining > 0

@@ -48,7 +48,11 @@ Rules you must follow:
 - Do NOT calculate any date or deadline. Return the raw phrase only.
 - Use null when the speaker did not say something. Never guess.
 - null means "not stated". false means the speaker explicitly said no.
-- A mention of "Fasal Bima" or "crop insurance" means has_pmfby_policy = true.
+- A mention of "Fasal Bima", "ಫಸಲ್ ಬಿಮಾ" or "crop insurance" means has_pmfby_policy = true.
+- Give "crop" as the ENGLISH crop name, never a transliteration.
+  ಹತ್ತಿ -> "cotton"   ಜೋಳ -> "maize"   ಶೇಂಗಾ -> "groundnut"
+  ಭತ್ತ -> "rice"      ಕಬ್ಬು -> "sugarcane"   ಸೂರ್ಯಕಾಂತಿ -> "sunflower"
+- Return event_datetime_raw in the speaker's own words, in their own script.
 """
 
 

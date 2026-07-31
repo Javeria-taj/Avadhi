@@ -42,16 +42,50 @@ def load_rules(directory: Path | None = None) -> list[dict[str, Any]]:
 
 # Relative-time resolution lives here, in plain code. The model reports the
 # phrase it heard; it does not do date arithmetic.
-_RELATIVE_PATTERNS: list[tuple[str, timedelta]] = [
-    (r"\b(just now|right now|ಈಗ)\b", timedelta(0)),
-    (r"\b(this morning|ಇಂದು ಬೆಳಿಗ್ಗೆ)\b", timedelta(hours=-6)),
-    (r"\b(today|ಇಂದು)\b", timedelta(hours=-3)),
-    (r"\b(last night|tonight|ನಿನ್ನೆ ರಾತ್ರಿ)\b", timedelta(hours=-12)),
-    (r"\b(yesterday|ನಿನ್ನೆ)\b", timedelta(days=-1)),
-    (r"\b(day before yesterday|ಮೊನ್ನೆ)\b", timedelta(days=-2)),
+#
+# Two pattern tables, and the split matters
+# -----------------------------------------
+# Python's \b word boundary is defined against characters where isalnum() is
+# true. Kannada words routinely END in a combining vowel sign (U+0CC6 etc.)
+# which is category Mn and NOT alnum - so \b after a Kannada word never
+# matches and the phrase silently fails to resolve. The user then sees no
+# countdown, with nothing in the logs.
+#
+# So: \b for ASCII, plain substring for Indic. Indic patterns are ordered
+# longest-first, because without a boundary "ನಿನ್ನೆ" would otherwise shadow
+# "ನಿನ್ನೆ ರಾತ್ರಿ".
+
+_ASCII_PATTERNS: list[tuple[str, timedelta]] = [
+    (r"\b(just now|right now)\b", timedelta(0)),
+    (r"\b(this morning)\b", timedelta(hours=-6)),
+    (r"\b(last night|tonight)\b", timedelta(hours=-12)),
+    (r"\b(day before yesterday)\b", timedelta(days=-2)),
+    (r"\b(yesterday)\b", timedelta(days=-1)),
+    (r"\b(today)\b", timedelta(hours=-3)),
     (r"\b(two days ago)\b", timedelta(days=-2)),
     (r"\b(three days ago)\b", timedelta(days=-3)),
-    (r"\b(last week|ಕಳೆದ ವಾರ)\b", timedelta(days=-7)),
+    (r"\b(last week)\b", timedelta(days=-7)),
+]
+
+# LONGEST FIRST. Do not reorder without re-running the tests.
+_INDIC_PATTERNS: list[tuple[str, timedelta]] = [
+    ("ಮೊನ್ನೆ ರಾತ್ರಿ", timedelta(days=-2, hours=-12)),
+    ("ನಿನ್ನೆ ರಾತ್ರಿ", timedelta(hours=-12)),
+    ("ಇಂದು ಬೆಳಿಗ್ಗೆ", timedelta(hours=-6)),
+    ("ಇವತ್ತು ಬೆಳಿಗ್ಗೆ", timedelta(hours=-6)),
+    ("ಕಳೆದ ವಾರ", timedelta(days=-7)),
+    ("ಈ ರಾತ್ರಿ", timedelta(hours=-6)),
+    ("ಮೊನ್ನೆ", timedelta(days=-2)),
+    ("ನಿನ್ನೆ", timedelta(days=-1)),
+    ("ಇಂದು", timedelta(hours=-3)),
+    ("ಇವತ್ತು", timedelta(hours=-3)),
+    ("ಈಗ", timedelta(0)),
+    # Hindi, since the same failure mode applies to Devanagari.
+    ("कल रात", timedelta(hours=-12)),
+    ("परसों", timedelta(days=-2)),
+    ("कल", timedelta(days=-1)),
+    ("आज", timedelta(hours=-3)),
+    ("अभी", timedelta(0)),
 ]
 
 
@@ -77,9 +111,14 @@ def resolve_relative_datetime(
     except ValueError:
         pass
 
-    for pattern, delta in _RELATIVE_PATTERNS:
+    for pattern, delta in _ASCII_PATTERNS:
         if re.search(pattern, text):
             # Deliberately capped below 1.0: an inferred time is never certain.
+            return current + delta, 0.7
+
+    # Substring, not regex: see the note above the pattern tables.
+    for phrase, delta in _INDIC_PATTERNS:
+        if phrase in text:
             return current + delta, 0.7
 
     return None, 0.0
