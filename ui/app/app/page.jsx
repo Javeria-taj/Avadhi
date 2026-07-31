@@ -85,6 +85,64 @@ export default function Home() {
   const [docLoading, setDocLoading] = useState(false)
   const [docError, setDocError] = useState(null)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+
+  // Date Confirmation Modal State
+  const [showDateModal, setShowDateModal] = useState(false)
+  const [dateModalCase, setDateModalCase] = useState(null)
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedTime, setSelectedTime] = useState('08:00')
+
+  const openDateModal = (c, e) => {
+    if (e) e.stopPropagation()
+    setDateModalCase(c)
+    const todayStr = new Date().toISOString().split('T')[0]
+    setSelectedDate(todayStr)
+    setSelectedTime('08:00')
+    setShowDateModal(true)
+  }
+
+  const handleConfirmDateSave = () => {
+    if (!dateModalCase) return
+    const targetId = dateModalCase.id
+    const dateTimeStr = `${selectedDate}T${selectedTime}:00`
+    const eventTime = new Date(dateTimeStr).getTime()
+    const validEventTime = Number.isNaN(eventTime) ? Date.now() : eventTime
+    const windowHours = dateModalCase.windowH || 72
+    const deadlineTime = validEventTime + windowHours * 3600 * 1000
+    const deadlineIso = new Date(deadlineTime).toISOString()
+
+    setCases((prevCases) =>
+      prevCases.map((c) => {
+        if (c.id === targetId) {
+          return {
+            ...c,
+            deadline: deadlineTime,
+            deadlineIso: deadlineIso,
+            hoursRemaining: windowHours,
+            status: 'open',
+            st: 'open',
+            eventDate: shortDate(new Date(validEventTime).toISOString()),
+            eventDateEn: shortDate(new Date(validEventTime).toISOString()),
+            event: {
+              ...c.event,
+              event_datetime: new Date(validEventTime).toISOString(),
+              event_datetime_raw: dateTimeStr,
+            },
+          }
+        }
+        return c
+      })
+    )
+
+    setShowDateModal(false)
+    setDateModalCase(null)
+    setToastMessage(L('ದಿನಾಂಕ ಧೃಡೀಕರಿಸಲಾಗಿದೆ! ಗಡಿಯಾರ ಪ್ರಾರಂಭವಾಗಿದೆ.', 'Date confirmed! Countdown started.'))
+    setShowSuccessToast(true)
+    setTimeout(() => {
+      setShowSuccessToast(false)
+    }, 3500)
+  }
 
   // Dynamic Geolocation State.
   //
@@ -765,7 +823,7 @@ export default function Home() {
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3">
             <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          {L('ಯಶಸ್ವಿಯಾಗಿ ನೋಂದಾಯಿಸಲಾಗಿದೆ!', 'Registered successfully!')}
+          {toastMessage || L('ಯಶಸ್ವಿಯಾಗಿ ನೋಂದಾಯಿಸಲಾಗಿದೆ!', 'Registered successfully!')}
         </div>
       )}
       {/* Global Persistent TopBar */}
@@ -1243,16 +1301,18 @@ export default function Home() {
                   </div>
                   {!c.deadlineIso || c.st === 'need_info' ? (
                     <div
+                      onClick={(e) => openDateModal(c, e)}
                       style={{
                         marginTop: 12,
                         background: '#fdf3e4',
-                        border: '1px solid #ecd9b8',
+                        border: '1.5px solid #ecd9b8',
                         borderRadius: 12,
                         padding: '12px 14px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         gap: 10,
+                        cursor: 'pointer',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1271,8 +1331,11 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#b45309', background: '#ffffff', border: '1px solid #ecd9b8', padding: '5px 10px', borderRadius: 999, whiteSpace: 'nowrap' }}>
-                        {L('ದಿನಾಂಕ ನೀಡಿ', 'Confirm date')}
+                      <span
+                        onClick={(e) => openDateModal(c, e)}
+                        style={{ fontSize: 12, fontWeight: 700, color: '#b45309', background: '#ffffff', border: '1px solid #ecd9b8', padding: '6px 12px', borderRadius: 999, whiteSpace: 'nowrap', cursor: 'pointer' }}
+                      >
+                        {L('ದಿನಾಂಕ ನಮೂದಿಸಿ', 'Set Date & Time')}
                       </span>
                     </div>
                   ) : (
@@ -1671,20 +1734,7 @@ export default function Home() {
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    setIntake('idle')
-                    setIntakeResult({
-                      caseId: ac.id,
-                      transcript: '',
-                      facts: { crop: ac.scheme, when: null, area: null },
-                      dateConfidence: null,
-                      needsDateConfirmation: true,
-                      question: L('ಘಟನೆ ನಡೆದ ನಿಖರ ದಿನಾಂಕ ಯಾವುದು?', 'What was the exact date of the event?'),
-                      options: [],
-                      cases: [ac],
-                    })
-                    setScreen('intake')
-                  }}
+                  onClick={(e) => openDateModal(ac, e)}
                   style={{
                     width: '100%',
                     marginTop: 14,
@@ -2184,6 +2234,231 @@ export default function Home() {
             </>
           )}
         </section>
+      {/* Date & Time Confirmation Modal */}
+      {showDateModal && dateModalCase && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setShowDateModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#ffffff',
+              borderRadius: 24,
+              maxWidth: 480,
+              width: '100%',
+              padding: '24px 22px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+              color: '#1c1c1a',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#b45309' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {L('ದಿನಾಂಕ ಧೃಡೀಕರಣ', 'Date Confirmation')}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowDateModal(false)}
+                style={{ background: '#f1f0ec', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 16, fontWeight: 700, color: '#6f6b63', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 6px', color: '#1c1c1a', lineHeight: 1.25 }}>
+              {L('ಘಟನೆಯ ದಿನಾಂಕ ಮತ್ತು ಸಮಯ ನಮೂದಿಸಿ', 'Set Event Date & Time')}
+            </h2>
+            <div style={{ fontSize: 13.5, color: '#6f6b63', lineHeight: 1.5, marginBottom: 20 }}>
+              {L(
+                'ಬೆಳೆ ಹಾನಿ ಅಥವಾ ಘಟನೆ ನಡೆದ ನಿಖರ ದಿನಾಂಕ ಮತ್ತು ಸಮಯ ಆಯ್ಕೆಮಾಡಿ. ಇದರಿಂದ 72 ಗಂಟೆಗಳ ಗಡಿಯಾರ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.',
+                'Select the date and time when the incident occurred. This starts the 72-hour official countdown clock.'
+              )}
+            </div>
+
+            {/* Quick Presets */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#6f6b63', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {L('ತ್ವರಿತ ಆಯ್ಕೆಗಳು', 'Quick Presets')}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const d = new Date()
+                    setSelectedDate(d.toISOString().split('T')[0])
+                    setSelectedTime('08:00')
+                  }}
+                  style={{
+                    background: '#f8f7f3',
+                    border: '1.5px solid #d9d6cf',
+                    borderRadius: 12,
+                    padding: '10px 8px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    color: '#1c1c1a',
+                    textAlign: 'center',
+                  }}
+                >
+                  {L('ಇಂದು', 'Today')}<br />
+                  <span style={{ fontSize: 10, fontWeight: 500, color: '#6f6b63' }}>08:00 AM</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const d = new Date()
+                    d.setDate(d.getDate() - 1)
+                    setSelectedDate(d.toISOString().split('T')[0])
+                    setSelectedTime('20:00')
+                  }}
+                  style={{
+                    background: '#f8f7f3',
+                    border: '1.5px solid #d9d6cf',
+                    borderRadius: 12,
+                    padding: '10px 8px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    color: '#1c1c1a',
+                    textAlign: 'center',
+                  }}
+                >
+                  {L('ನಿನ್ನೆ', 'Yesterday')}<br />
+                  <span style={{ fontSize: 10, fontWeight: 500, color: '#6f6b63' }}>~Night</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const d = new Date()
+                    d.setDate(d.getDate() - 2)
+                    setSelectedDate(d.toISOString().split('T')[0])
+                    setSelectedTime('12:00')
+                  }}
+                  style={{
+                    background: '#f8f7f3',
+                    border: '1.5px solid #d9d6cf',
+                    borderRadius: 12,
+                    padding: '10px 8px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    color: '#1c1c1a',
+                    textAlign: 'center',
+                  }}
+                >
+                  {L('2 ದಿನ ಹಿಂದೆ', '2 Days Ago')}<br />
+                  <span style={{ fontSize: 10, fontWeight: 500, color: '#6f6b63' }}>~Noon</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form Inputs */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 24 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#4a4740', marginBottom: 6 }}>
+                  {L('ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ', 'Select Date')}
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    border: '1.5px solid #c6c2b9',
+                    borderRadius: 12,
+                    background: '#fafaf8',
+                    color: '#1c1c1a',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#4a4740', marginBottom: 6 }}>
+                  {L('ಸಮಯ ಆಯ್ಕೆಮಾಡಿ', 'Select Time')}
+                </label>
+                <input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    border: '1.5px solid #c6c2b9',
+                    borderRadius: 12,
+                    background: '#fafaf8',
+                    color: '#1c1c1a',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                type="button"
+                onClick={() => setShowDateModal(false)}
+                style={{
+                  flex: 1,
+                  minHeight: 52,
+                  background: '#f1f0ec',
+                  color: '#4a4740',
+                  border: 'none',
+                  borderRadius: 999,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {L('ರದ್ದುಗೊಳಿಸಿ', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDateSave}
+                style={{
+                  flex: 2,
+                  minHeight: 52,
+                  background: '#1b5e3f',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 999,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {L('ದಿನಾಂಕ ಧೃಡೀಕರಿಸಿ', 'Confirm & Start Clock')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
