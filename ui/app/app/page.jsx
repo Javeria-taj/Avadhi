@@ -733,7 +733,7 @@ export default function Home() {
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', height: '100vh', background: '#f8f7f3', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', height: '100vh', background: '#f8f7f3', color: '#1c1c1a', position: 'relative', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Success Toast */}
       {showSuccessToast && (
         <div
