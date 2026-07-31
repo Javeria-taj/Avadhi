@@ -257,10 +257,3 @@ bash ./models/download-ggml-model.sh small
 ```
 
 ---
-
-## 🎯 Verification Checklist for Demo Day
-
-- [ ] **Lifespan Warmup Check**: Run `curl http://localhost:8000/api/health` and verify `model_loaded` and `asr_ready` are true.
-- [ ] **Airplane Mode**: Switch host machine and device to Airplane mode. Run the entire pipeline (Record voice -> Detect crop damage -> Generate Checklist -> Check off evidence -> Generate PDF).
-- [ ] **Dynamic Language Switch**: Toggle Kannada and English mid-session and verify existing case lists localize automatically.
-- [ ] **GPS Location Stamp**: Take an evidence photo and check if the generated PDF contains the correct verified geolocation stamp.
