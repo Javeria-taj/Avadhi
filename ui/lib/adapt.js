@@ -141,7 +141,7 @@ export function adaptCase(apiCase, lang = 'kn') {
     deadline: claim.deadline_iso ? new Date(claim.deadline_iso).getTime() : null,
     deadlineIso: claim.deadline_iso || null,
     hoursRemaining: claim.hours_remaining ?? null,
-    status: claim.status,
+    status: !claim.deadline_iso ? 'need_info' : claim.status,
 
     // Sizes the progress bar, and labels the rule window on S3 and the PDF.
     windowH: winH,

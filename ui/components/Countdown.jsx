@@ -15,7 +15,24 @@ export default function Countdown({ claim }) {
     return () => clearInterval(id)
   }, [])
 
-  if (!claim?.deadline_iso || now === null) return null
+  if (now === null) return null
+
+  if (!claim?.deadline_iso) {
+    return (
+      <div className="countdown" data-status="need_info">
+        <div className="eyebrow">ದಿನಾಂಕ ಧೃಡೀಕರಿಸಿ / CONFIRM DATE</div>
+        <div className="countdown-value" style={{ fontSize: 22, lineHeight: 1.3 }}>
+          ದಿನಾಂಕ ಬೇಕಾಗಿದೆ
+          <span className="countdown-unit" style={{ fontSize: 13, display: 'block', margin: '4px 0 0' }}>
+            Confirm event date to calculate deadline
+          </span>
+        </div>
+        <div className="countdown-deadline">
+          Date required to start countdown
+        </div>
+      </div>
+    )
+  }
 
   const msLeft = new Date(claim.deadline_iso).getTime() - now
   const hours = Math.floor(Math.abs(msLeft) / 3600000)

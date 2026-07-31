@@ -269,28 +269,33 @@ export default function Home() {
     return `${pad(h)}:${pad(m)}:${pad(s)}`
   }
   const fmtShort = (ms) => {
+    if (ms == null) return '--:--'
     if (ms <= 0) return '00:00'
     const h = Math.floor(ms / H)
     const m = Math.floor((ms % H) / 60e3)
     return `${pad(h)}:${pad(m)}`
   }
   const due = (d) => {
+    if (!d) return L('ದಿನಾಂಕ ಬೇಕಾಗಿದೆ', 'Date required')
     const M = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
     const x = new Date(d)
+    if (Number.isNaN(x.getTime())) return L('ದಿನಾಂಕ ಬೇಕಾಗಿದೆ', 'Date required')
     return `${pad(x.getDate())} ${M[x.getMonth()]} ${pad(x.getHours())}:${pad(x.getMinutes())}`
   }
   const clock = (d) => {
+    if (!d) return '--:--:--'
     const x = new Date(d)
+    if (Number.isNaN(x.getTime())) return '--:--:--'
     return `${pad(x.getHours())}:${pad(x.getMinutes())}:${pad(x.getSeconds())}`
   }
 
-  const getStatus = (rem) => (rem <= 0 ? 'expired' : rem < 12 * H ? 'soon' : 'open')
-  const getCol = (st) => ({ open: '#1b5e3f', soon: '#a05a00', expired: '#6f6b63' }[st])
-  const getChip = (st) => ({ open: '#e8f2ec', soon: '#fdf3e4', expired: '#f1f0ec' }[st])
+  const getStatus = (rem) => (rem == null ? 'need_info' : rem <= 0 ? 'expired' : rem < 12 * H ? 'soon' : 'open')
+  const getCol = (st) => ({ open: '#1b5e3f', soon: '#a05a00', expired: '#6f6b63', need_info: '#b45309' }[st] || '#b45309')
+  const getChip = (st) => ({ open: '#e8f2ec', soon: '#fdf3e4', expired: '#f1f0ec', need_info: '#fef3c7' }[st] || '#fef3c7')
   const getBadge = (st) =>
     isKn
-      ? { open: 'ಚಾಲ್ತಿ', soon: 'ಶೀಘ್ರ ಮುಕ್ತಾಯ', expired: 'ಅವಧಿ ಮೀರಿದೆ' }[st]
-      : { open: 'Open', soon: 'Closing soon', expired: 'Expired' }[st]
+      ? ({ open: 'ಚಾಲ್ತಿ', soon: 'ಶೀಘ್ರ ಮುಕ್ತಾಯ', expired: 'ಅವಧಿ ಮೀರಿದೆ', need_info: 'ದಿನಾಂಕ ಬೇಕಾಗಿದೆ' }[st] || 'ದಿನಾಂಕ ಬೇಕಾಗಿದೆ')
+      : ({ open: 'Open', soon: 'Closing soon', expired: 'Expired', need_info: 'Date required' }[st] || 'Date required')
 
   const cloneCases = () => cases.map((c) => ({ ...c, steps: c.steps.map((s) => ({ ...s })) }))
 
@@ -509,19 +514,20 @@ export default function Home() {
 
   // Prepared data
   const cs = cases.map((c) => {
-    const rem = c.deadline - now
-    const st = getStatus(rem)
+    const hasDeadline = !!c.deadlineIso && c.deadline != null
+    const rem = hasDeadline ? c.deadline - now : null
+    const st = !hasDeadline ? 'need_info' : getStatus(rem)
     return {
       ...c,
       rem,
       st,
       color: getCol(st),
       chipBg: getChip(st),
-      pct: Math.max(0, Math.min(100, (1 - rem / (c.windowH * H)) * 100)),
+      pct: rem != null ? Math.max(0, Math.min(100, (1 - rem / (c.windowH * H)) * 100)) : 0,
     }
   })
 
-  const live = cs.filter((c) => c.st !== 'expired').sort((a, b) => a.rem - b.rem)
+  const live = cs.filter((c) => c.st !== 'expired').sort((a, b) => (a.rem ?? Infinity) - (b.rem ?? Infinity))
   const dead = cs.filter((c) => c.st === 'expired')
   const soonCount = live.filter((c) => c.st === 'soon').length
   const empty = cs.length === 0
@@ -1235,21 +1241,57 @@ export default function Home() {
                       {getBadge(c.st)}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 12 }}>
-                    <span
+                  {!c.deadlineIso || c.st === 'need_info' ? (
+                    <div
                       style={{
-                        fontSize: 34,
-                        fontWeight: 700,
-                        letterSpacing: '-0.02em',
-                        fontVariantNumeric: 'tabular-nums',
-                        color: c.color,
-                        lineHeight: 1,
+                        marginTop: 12,
+                        background: '#fdf3e4',
+                        border: '1px solid #ecd9b8',
+                        borderRadius: 12,
+                        padding: '12px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
                       }}
                     >
-                      {hoursText}
-                    </span>
-                    <span style={{ fontSize: 12, color: '#6f6b63' }}>{unitText}</span>
-                  </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#b45309" strokeWidth="2" style={{ flex: 'none' }}>
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#5c3400' }}>
+                            {L('ಘಟನೆಯ ದಿನಾಂಕವನ್ನು ಧೃಡೀಕರಿಸಿ', 'Confirm event date')}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: '#8a5a10', marginTop: 1 }}>
+                            {L('ಗಡಿಯಾರ ಪ್ರಾರಂಭಿಸಲು ದಿನಾಂಕ ಬೇಕಾಗಿದೆ', 'Date required to start countdown')}
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#b45309', background: '#ffffff', border: '1px solid #ecd9b8', padding: '5px 10px', borderRadius: 999, whiteSpace: 'nowrap' }}>
+                        {L('ದಿನಾಂಕ ನೀಡಿ', 'Confirm date')}
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 12 }}>
+                      <span
+                        style={{
+                          fontSize: 34,
+                          fontWeight: 700,
+                          letterSpacing: '-0.02em',
+                          fontVariantNumeric: 'tabular-nums',
+                          color: c.color,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {hoursText}
+                      </span>
+                      <span style={{ fontSize: 12, color: '#6f6b63' }}>{unitText}</span>
+                    </div>
+                  )}
                   <div style={{ fontSize: 17, fontWeight: 700, marginTop: 10, lineHeight: 1.35 }}>{L(c.schemeKn, c.schemeEn)}</div>
                   <div style={{ fontSize: 12, color: '#6f6b63', marginTop: 2 }}>{schemeEnText}</div>
                   <div style={{ position: 'relative', height: 6, borderRadius: 999, background: '#eeece7', marginTop: 14, overflow: 'hidden' }}>
@@ -1596,26 +1638,101 @@ export default function Home() {
                 {getBadge(ac.st)}
               </span>
             </div>
-            <div
-              style={{
-                fontSize: 'clamp(48px,14vw,72px)',
-                fontWeight: 700,
-                lineHeight: 1,
-                letterSpacing: '-0.03em',
-                fontVariantNumeric: 'tabular-nums',
-                color: ac.color,
-                marginTop: 12,
-              }}
-            >
-              {fmt(ac.rem)}
-            </div>
-            <div style={{ fontSize: 12, color: '#9a968d', marginTop: 6 }}>{t.hms}</div>
-            <div style={{ position: 'relative', height: 8, borderRadius: 999, background: '#eeece7', marginTop: 16, overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${ac.pct}%`, borderRadius: 999, background: ac.color }} />
-            </div>
+
+            {!ac.deadlineIso || ac.st === 'need_info' ? (
+              <div
+                style={{
+                  marginTop: 14,
+                  background: '#fdf3e4',
+                  border: '1px solid #ecd9b8',
+                  borderRadius: 14,
+                  padding: '16px 18px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#b45309" strokeWidth="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#5c3400', lineHeight: 1.3 }}>
+                      {L('ಘಟನೆಯ ದಿನಾಂಕವನ್ನು ಧೃಡೀಕರಿಸಿ', 'Confirm event date')}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#8a5a10', marginTop: 4, lineHeight: 1.5 }}>
+                      {L(
+                        'ಘಟನೆ ನಡೆದ ದಿನಾಂಕ ಅಥವಾ ಬ್ಯಾಂಕ್ ಸೂಚನೆ ದಿನಾಂಕ ಸ್ಪಷ್ಟವಾಗಿ ತಿಳಿದ ನಂತರ ಗಡುವು ಲೆಕ್ಕಾಚಾರ ಮಾಡಲಾಗುತ್ತದೆ.',
+                        'The deadline countdown will be calculated once the exact event date or bank notice date is confirmed.'
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setIntake('idle')
+                    setIntakeResult({
+                      caseId: ac.id,
+                      transcript: '',
+                      facts: { crop: ac.scheme, when: null, area: null },
+                      dateConfidence: null,
+                      needsDateConfirmation: true,
+                      question: L('ಘಟನೆ ನಡೆದ ನಿಖರ ದಿನಾಂಕ ಯಾವುದು?', 'What was the exact date of the event?'),
+                      options: [],
+                      cases: [ac],
+                    })
+                    setScreen('intake')
+                  }}
+                  style={{
+                    width: '100%',
+                    marginTop: 14,
+                    padding: '12px 16px',
+                    background: '#b45309',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: 999,
+                    fontSize: 14,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  {L('ದಿನಾಂಕ ನಮೂದಿಸಿ / ಧೃಡೀಕರಿಸಿ', 'Provide / confirm date')}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div
+                  style={{
+                    fontSize: 'clamp(48px,14vw,72px)',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    letterSpacing: '-0.03em',
+                    fontVariantNumeric: 'tabular-nums',
+                    color: ac.color,
+                    marginTop: 12,
+                  }}
+                >
+                  {fmt(ac.rem)}
+                </div>
+                <div style={{ fontSize: 12, color: '#9a968d', marginTop: 6 }}>{t.hms}</div>
+                <div style={{ position: 'relative', height: 8, borderRadius: 999, background: '#eeece7', marginTop: 16, overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${ac.pct}%`, borderRadius: 999, background: ac.color }} />
+                </div>
+              </>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #eeece7', marginTop: 16, paddingTop: 11, fontSize: 13 }}>
               <span style={{ color: '#6f6b63' }}>{t.deadline}</span>
-              <span style={{ fontWeight: 700 }}>{due(ac.deadline)} IST</span>
+              <span style={{ fontWeight: 700, color: ac.st === 'need_info' ? '#8a5a10' : 'inherit' }}>{due(ac.deadline)} IST</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginTop: 6 }}>
               <span style={{ color: '#6f6b63' }}>{t.ruleWindow}</span>
