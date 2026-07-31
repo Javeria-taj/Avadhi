@@ -96,7 +96,7 @@ async def intake(
         # Persist the strongest claim as a Case. This is what keeps the clock
         # running after the app closes.
         case_id = None
-        actionable = [c for c in claims if c.status is not ClaimStatus.NEED_INFO]
+        actionable = [c for c in claims if c.status is not ClaimStatus.EXPIRED]
         if actionable:
             case_id = store.create_case(event, actionable[0]).case_id
 
