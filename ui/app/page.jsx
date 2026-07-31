@@ -1,10 +1,19 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import './narrative.css';
 
 export default function Narrative() {
+  const router = useRouter();
   const rootRef = useRef(null);
+  const redirectedRef = useRef(false);
   const [lang, setLang] = useState('en');
+
+  useEffect(() => {
+    if (router) {
+      router.prefetch('/app');
+    }
+  }, [router]);
 
   useEffect(() => {
     try {
@@ -18,15 +27,20 @@ export default function Narrative() {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    root.dataset.langRoot = lang;
+    try { localStorage.setItem('avadhi_lang', lang); } catch (e) {}
+  }, [lang]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
 
     const btn = root.querySelector('#lang-toggle-btn');
     if (btn) {
-      const handleToggle = () => {
-        setLang(prev => {
-          const newLang = prev === 'en' ? 'kn' : 'en';
-          try { localStorage.setItem('avadhi_lang', newLang); } catch (e) {}
-          return newLang;
-        });
+      const handleToggle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLang(prev => (prev === 'en' ? 'kn' : 'en'));
       };
       btn.addEventListener('click', handleToggle);
       return () => btn.removeEventListener('click', handleToggle);
@@ -37,23 +51,32 @@ export default function Narrative() {
     const root = rootRef.current;
     if (!root) return;
 
+    const handleEnter = () => {
+      if (!redirectedRef.current) {
+        redirectedRef.current = true;
+        if (router) {
+          router.push('/app');
+        } else {
+          window.location.href = '/app';
+        }
+      }
+    };
+
     const enterBtn = root.querySelector('#enter-app-btn');
     if (enterBtn) {
-      const handleEnter = () => {
-        window.location.href = '/app';
-      };
       enterBtn.addEventListener('click', handleEnter);
-      return () => enterBtn.removeEventListener('click', handleEnter);
     }
-  }, []);
 
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    
-    root.querySelectorAll('[data-lang]').forEach(el => { el.style.display = el.dataset.lang === lang ? '' : 'none'; });
-    root.querySelectorAll('[data-langbtn]').forEach(el => { el.style.display = el.dataset.langbtn === (lang === 'en' ? 'kn' : 'en') ? '' : 'none'; });
-  }, [lang]);
+    const appCard = root.querySelector('[data-fx="app"]');
+    if (appCard) {
+      appCard.addEventListener('click', handleEnter);
+    }
+
+    return () => {
+      if (enterBtn) enterBtn.removeEventListener('click', handleEnter);
+      if (appCard) appCard.removeEventListener('click', handleEnter);
+    };
+  }, [router]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -213,6 +236,17 @@ export default function Narrative() {
         setFx('s10l3', { opacity: C(p10, .26, .36) * hold });
         const e = eo(C(p10, .5, .95));
         setFx('app', { opacity: C(p10, .5, .6), transform: `scale(${.3 + .7 * e})`, borderRadius: (48 * (1 - e)) + 'px', boxShadow: `0 0 0 ${3 * (1 - e)}px #2b2a26, 0 60px 140px rgba(0,0,0,${.7 * (1 - e)})`, pointerEvents: e > .9 ? 'auto' : 'none' });
+
+        if (p10 >= 0.95 && !redirectedRef.current) {
+          redirectedRef.current = true;
+          if (router) {
+            router.push('/app');
+          } else {
+            window.location.href = '/app';
+          }
+        } else if (p10 < 0.90) {
+          redirectedRef.current = false;
+        }
       }
     };
 
@@ -226,7 +260,11 @@ export default function Narrative() {
   }, []);
 
   return (
-    <div ref={rootRef} style={{background:'#0f0f0e',color:'#f2f1ec',overflow:'clip'}} dangerouslySetInnerHTML={{ __html: `
+    <div ref={rootRef} style={{background:'#0f0f0e',color:'#f2f1ec',overflow:'clip'}} dangerouslySetInnerHTML={NARRATIVE_HTML_PAYLOAD} />
+  );
+}
+
+const NARRATIVE_HTML_PAYLOAD = { __html: `
 
 <!-- fixed chrome -->
 <div data-fx="corner" style="position:fixed;top:22px;left:26px;z-index:60;opacity:0;pointer-events:none">
@@ -387,10 +425,10 @@ export default function Narrative() {
             <div style="font-size:12.5px;font-weight:600;color:#b3341e;display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:50%;background:#b3341e;animation:pulse 1.2s infinite"></span><span data-lang="en">Listening…</span><span data-lang="kn" style="display:none">ಕೇಳುತ್ತಿದೆ…</span></div>
             <div data-fx="recSec" style="font-size:52px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:14px;letter-spacing:-.02em">00:07</div>
             <p style="font-size:14px;line-height:1.6;color:#4a4740;margin:16px 0 0"><span data-lang="en">Speak slowly and clearly. Tap the button below when you are done.</span><span data-lang="kn" style="display:none">ನಿಧಾನವಾಗಿ, ಸ್ಪಷ್ಟವಾಗಿ ಹೇಳಿ. ಮುಗಿದ ಮೇಲೆ ಕೆಳಗಿನ ಗುಂಡಿ ಒತ್ತಿ.</span></p>
-            <div style="background:#fafaf8;border:1px solid #e9e7e2;border-radius:12px;padding:12px;margin-top:16px;font-size:13.5px;line-height:1.55;color:#2e2d2a">ನಿನ್ನೆ ರಾತ್ರಿ ಆಲಿಕಲ್ಲು ಮಳೆಯಿಂದ ನನ್ನ ಹತ್ತಿ ಬೆಳೆ ಹಾಳಾಗಿದೆ. ಸುಮಾರು ಎರಡು ಎಕರೆ.</div>
+            <div style="background:#fafaf8;border:1px solid #e9e7e2;border-radius:12px;padding:12px;margin-top:16px;font-size:13.5px;line-height:1.55;color:#2e2d2a"><span data-lang="en">Last night my cotton crop was damaged by hailstorm. About 2 acres.</span><span data-lang="kn" style="display:none">ನಿನ್ನೆ ರಾತ್ರಿ ಆಲಿಕಲ್ಲು ಮಳೆಯಿಂದ ನನ್ನ ಹತ್ತಿ ಬೆಳೆ ಹಾಳಾಗಿದೆ. ಸುಮಾರು ಎರಡು ಎಕರೆ.</span></div>
           </div>
           <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:14px">
-            <div style="background:#b3341e;color:#fff;border-radius:999px;min-height:60px;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:15px;height:15px;border-radius:3px;background:#fff"></span><span><span style="display:block;font-size:16px;font-weight:700"><span data-lang="en">Stop</span><span data-lang="kn" style="display:none">ನಿಲ್ಲಿಸಿ</span></span><span style="display:block;font-size:10px;opacity:.75">Stop recording</span></span></div>
+            <div style="background:#b3341e;color:#fff;border-radius:999px;min-height:60px;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:15px;height:15px;border-radius:3px;background:#fff"></span><span><span style="display:block;font-size:16px;font-weight:700"><span data-lang="en">Stop</span><span data-lang="kn" style="display:none">ನಿಲ್ಲಿಸಿ</span></span><span style="display:block;font-size:10px;opacity:.75"><span data-lang="en">Stop recording</span><span data-lang="kn" style="display:none">ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸಿ</span></span></span></div>
             <div style="font-size:12px;color:#1b5e3f;font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
               <span data-lang="en">Your voice never leaves this device</span><span data-lang="kn" style="display:none">ನಿಮ್ಮ ಧ್ವನಿ ಈ ಸಾಧನ ಬಿಟ್ಟು ಹೋಗುವುದಿಲ್ಲ</span>
@@ -454,7 +492,7 @@ export default function Narrative() {
             <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #eeece7"><span style="flex:none;width:66px;font-size:10.5px;color:#6f6b63"><span data-lang="en">Deadline</span><span data-lang="kn" style="display:none">ಗಡುವು</span></span><span style="flex:1;font-size:12px;font-weight:600">01 AUG 21:26 IST · 72h</span></div>
             <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #eeece7"><span style="flex:none;width:66px;font-size:10.5px;color:#6f6b63"><span data-lang="en">Rule</span><span data-lang="kn" style="display:none">ನಿಯಮ</span></span><span style="flex:1;font-size:12px;font-weight:600">PMFBY §21(2)</span></div>
             <div style="font-size:10.5px;color:#6f6b63;margin:12px 0 4px"><span data-lang="en">Evidence attached</span><span data-lang="kn" style="display:none">ಲಗತ್ತಿಸಿದ ಸಾಕ್ಷ್ಯ</span></div>
-            <div style="display:flex;gap:8px;align-items:baseline;font-size:10.5px;padding:4px 0;border-bottom:1px solid #f2f1ec"><span style="font-weight:700">EV-01</span><span style="flex:1;color:#4a4740">Wide shot of the field</span><span style="color:#1b5e3f;font-variant-numeric:tabular-nums">07:42 ✓</span></div>
+            <div style="display:flex;gap:8px;align-items:baseline;font-size:10.5px;padding:4px 0;border-bottom:1px solid #f2f1ec"><span style="font-weight:700">EV-01</span><span style="flex:1;color:#4a4740"><span data-lang="en">Wide shot of the field</span><span data-lang="kn" style="display:none">ಹೊಲದ ಪೂರ್ಣ ನೋಟ</span></span><span style="color:#1b5e3f;font-variant-numeric:tabular-nums">07:42 ✓</span></div>
             <div style="display:flex;gap:16px;margin-top:22px"><div style="flex:1;border-top:1px solid #1c1c1a;padding-top:5px;font-size:9.5px;color:#6f6b63"><span data-lang="en">Signature</span><span data-lang="kn" style="display:none">ಸಹಿ</span></div><div style="flex:1;border-top:1px solid #1c1c1a;padding-top:5px;font-size:9.5px;color:#6f6b63"><span data-lang="en">Date</span><span data-lang="kn" style="display:none">ದಿನಾಂಕ</span></div></div>
           </div>
           <div style="position:absolute;bottom:0;left:0;right:0;height:64px;background:linear-gradient(to top,#eaf0eb 55%,rgba(234,240,235,0))"></div>
@@ -614,8 +652,8 @@ export default function Narrative() {
       </div>
       <div data-fx="d4" style="opacity:0">
         <div style="font-size:12px;color:#6f6b63;margin:18px 0 6px"><span data-lang="en">Evidence attached</span><span data-lang="kn" style="display:none">ಲಗತ್ತಿಸಿದ ಸಾಕ್ಷ್ಯ</span></div>
-        <div style="display:flex;gap:10px;align-items:baseline;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f1ec"><span style="font-weight:700">EV-01</span><span style="flex:1;color:#4a4740">Wide shot of the field</span><span style="color:#1b5e3f;font-variant-numeric:tabular-nums">15.1502N 76.9328E · 07:42 ✓</span></div>
-        <div style="display:flex;gap:10px;align-items:baseline;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f1ec"><span style="font-weight:700">EV-02</span><span style="flex:1;color:#4a4740">Close-up of damaged crop</span><span style="color:#1b5e3f;font-variant-numeric:tabular-nums">15.1502N 76.9331E · 07:51 ✓</span></div>
+        <div style="display:flex;gap:10px;align-items:baseline;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f1ec"><span style="font-weight:700">EV-01</span><span style="flex:1;color:#4a4740"><span data-lang="en">Wide shot of the field</span><span data-lang="kn" style="display:none">ಹೊಲದ ಪೂರ್ಣ ನೋಟ</span></span><span style="color:#1b5e3f;font-variant-numeric:tabular-nums">15.1502N 76.9328E · 07:42 ✓</span></div>
+        <div style="display:flex;gap:10px;align-items:baseline;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f1ec"><span style="font-weight:700">EV-02</span><span style="flex:1;color:#4a4740"><span data-lang="en">Close-up of damaged crop</span><span data-lang="kn" style="display:none">ಬೆಳೆಯ ಹತ್ತಿರದ ಫೋಟೋ</span></span><span style="color:#1b5e3f;font-variant-numeric:tabular-nums">15.1502N 76.9331E · 07:51 ✓</span></div>
       </div>
       <div data-fx="d5" style="opacity:0">
         <p style="font-size:13px;line-height:1.65;color:#6f6b63;margin:18px 0 0"><span data-lang="en">I declare that the details above are true. This report is an intimation intended to meet the deadline under PMFBY §21(2).</span><span data-lang="kn" style="display:none">ಮೇಲಿನ ವಿವರ ಸತ್ಯವೆಂದು ಘೋಷಿಸುತ್ತೇನೆ. ಈ ವರದಿ PMFBY §21(2) ನಿಯಮದಡಿ ಗಡುವಿನೊಳಗೆ ತಿಳಿಸುವ ಉದ್ದೇಶದ ಸೂಚನೆ.</span></p>
@@ -639,7 +677,7 @@ export default function Narrative() {
     </div>
 
     <!-- the real S1 Home takes over -->
-    <div data-fx="app" style="opacity:0;position:absolute;inset:0;transform:scale(.3);border-radius:48px;overflow:hidden;background:#f8f7f3;color:#1c1c1a;box-shadow:0 0 0 3px #2b2a26,0 60px 140px rgba(0,0,0,.7)">
+    <div data-fx="app" style="opacity:0;position:absolute;inset:0;transform:scale(.3);border-radius:48px;overflow:hidden;background:#f8f7f3;color:#1c1c1a;box-shadow:0 0 0 3px #2b2a26,0 60px 140px rgba(0,0,0,.7);cursor:pointer">
       <div style="height:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column">
         <div style="background:#e2e8e2;border-bottom:1px solid #d0d7cf;padding:24px 20px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex:none">
           <div>
@@ -685,8 +723,6 @@ export default function Narrative() {
         </div>
       </div>
     </div>
-  </div>
 </div>
-` }} />
-  );
-}
+</div>
+` };

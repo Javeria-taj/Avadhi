@@ -157,3 +157,20 @@ a{color:#d9a44e;text-decoration:none}a:hover{color:#e8bd7e}
 @keyframes avSway{from{transform:skewX(-1.2deg)}to{transform:skewX(1.2deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 @keyframes avHint{0%,100%{opacity:.35}50%{opacity:.8}}
+
+/* Language Visibility Rules */
+[data-lang="kn"] { display: none; }
+[data-lang="en"] { display: inline; }
+
+[data-lang-root="kn"] [data-lang="kn"] { display: inline !important; }
+[data-lang-root="kn"] [data-lang="en"] { display: none !important; }
+
+[data-lang-root="en"] [data-lang="en"] { display: inline !important; }
+[data-lang-root="en"] [data-lang="kn"] { display: none !important; }
+
+[data-lang-root="kn"] [data-langbtn="kn"] { display: none !important; }
+[data-lang-root="kn"] [data-langbtn="en"] { display: inline !important; }
+
+[data-lang-root="en"] [data-langbtn="en"] { display: none !important; }
+[data-lang-root="en"] [data-langbtn="kn"] { display: inline !important; }
+
