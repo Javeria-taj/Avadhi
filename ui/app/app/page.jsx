@@ -102,6 +102,14 @@ export default function Home() {
     setShowDateModal(true)
   }
 
+  const formatShortDate = (iso) => {
+    if (!iso) return ''
+    const x = new Date(iso)
+    if (Number.isNaN(x.getTime())) return ''
+    const M = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+    return `${pad(x.getDate())} ${M[x.getMonth()]} ${x.getFullYear()}`
+  }
+
   const handleConfirmDateSave = () => {
     if (!dateModalCase) return
     const targetId = dateModalCase.id
@@ -115,6 +123,7 @@ export default function Home() {
     setCases((prevCases) =>
       prevCases.map((c) => {
         if (c.id === targetId) {
+          const isoStr = new Date(validEventTime).toISOString()
           return {
             ...c,
             deadline: deadlineTime,
@@ -122,11 +131,11 @@ export default function Home() {
             hoursRemaining: windowHours,
             status: 'open',
             st: 'open',
-            eventDate: shortDate(new Date(validEventTime).toISOString()),
-            eventDateEn: shortDate(new Date(validEventTime).toISOString()),
+            eventDate: formatShortDate(isoStr),
+            eventDateEn: formatShortDate(isoStr),
             event: {
               ...c.event,
-              event_datetime: new Date(validEventTime).toISOString(),
+              event_datetime: isoStr,
               event_datetime_raw: dateTimeStr,
             },
           }
