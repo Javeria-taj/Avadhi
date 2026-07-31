@@ -100,6 +100,29 @@ def transcribe(audio_path: str | Path, lang: str | None = None) -> tuple[str, st
     return text, detected
 
 
+def warmup() -> bool:
+    """Load the ASR model at startup.
+
+    faster-whisper downloads its weights on FIRST USE, not at install. That
+    means the first recording of the day triggers a ~500MB download - which
+    fails outright when offline, and shows up as a 500 on the intake endpoint
+    with no obvious cause.
+
+    Loading here means the download happens at boot, on a machine that still
+    has network, instead of on stage.
+    """
+    if settings.mock_mode:
+        return True
+    if settings.asr_backend == "whispercpp":
+        return Path(settings.whispercpp_bin).exists()
+    try:
+        _load()
+        return True
+    except Exception:
+        log.exception("ASR warmup failed - check ASR_MODEL and network")
+        return False
+
+
 def is_ready() -> bool:
     if settings.mock_mode:
         return True

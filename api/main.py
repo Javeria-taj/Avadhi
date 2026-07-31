@@ -31,6 +31,14 @@ async def lifespan(_: FastAPI):
             logging.info("Model warm and ready")
         else:
             logging.error("Model warmup FAILED - check the server, or set MOCK_MODE=true")
+
+        # faster-whisper downloads weights on first use. Do it now, while there
+        # is still a network, rather than on the first recording at the venue.
+        logging.info("Loading ASR model %s (first run downloads weights)", settings.asr_model)
+        if asr.warmup():
+            logging.info("ASR ready")
+        else:
+            logging.error("ASR warmup FAILED - the first recording will 500")
     yield
 
 
