@@ -2234,6 +2234,8 @@ export default function Home() {
             </>
           )}
         </section>
+      )}
+
       {/* Date & Time Confirmation Modal */}
       {showDateModal && dateModalCase && (
         <div
